@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="th" data-t="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Notification Center — IT Support Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & Base ─────────────────────────────────────── */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0c0c0e;--bg2:#111114;--bg3:#18181c;--bg4:#202024;
+  --fg:#f0f0f0;--fg2:#aaaaaa;--fg3:#666;--fg4:#444;
+  --border:#222226;--border2:#2a2a30;
+  --card:#14141a;--card2:#1a1a22;
+  --green:#00d68f;--green2:#00f5a0;
+  --red:#ff4757;--red2:#ff6b81;
+  --blue:#4facfe;--blue2:#00f2fe;
+  --orange:#ffa726;--orange2:#ffcc02;
+  --purple:#a78bfa;--purple2:#c4b5fd;
+  --line:#00c300;--line2:#00e500;
+  --tg:#229ed9;--tg2:#54acd2;
+  --r:16px;--r2:12px;--r3:8px;
+  --sans:'Prompt',sans-serif;
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --glass:rgba(255,255,255,0.03);
+  --glass-border:rgba(255,255,255,0.08);
+}
+
+html,body{height:100%;font-family:var(--sans);background:var(--bg);color:var(--fg);overflow-x:hidden}
+
+/* ── Scrollbar ─────────────────────────────────────────── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
+
+/* ── Topbar ────────────────────────────────────────────── */
+.topbar{
+  position:fixed;top:0;left:0;right:0;height:60px;z-index:100;
+  background:rgba(12,12,14,.85);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;gap:14px;
+}
+.topbar-logo{
+  width:32px;height:32px;border-radius:10px;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+  flex-shrink:0;
+}
+.topbar-title{font-weight:600;font-size:.95rem;color:var(--fg)}
+.topbar-sub{font-size:.72rem;color:var(--fg3);margin-top:1px}
+.topbar-spacer{flex:1}
+.topbar-time{font-size:.75rem;color:var(--fg3);text-align:right}
+.topbar-back{
+  padding:6px 14px;border-radius:50px;background:var(--bg3);
+  border:1px solid var(--border);color:var(--fg2);font-size:.78rem;
+  cursor:pointer;transition:.2s;text-decoration:none;
+  font-family:var(--sans);
+}
+.topbar-back:hover{background:var(--bg4);color:var(--fg)}
+
+/* ── Layout ────────────────────────────────────────────── */
+.page{padding:76px 16px 32px;max-width:1100px;margin:0 auto}
+
+/* ── Section Header ────────────────────────────────────── */
+.section-header{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.section-header h2{font-size:1rem;font-weight:600;color:var(--fg)}
+.section-header .badge{
+  padding:3px 10px;border-radius:50px;font-size:.68rem;font-weight:600;
+  background:var(--bg3);color:var(--fg3);border:1px solid var(--border);
+}
+.section-divider{height:1px;background:var(--border);margin:28px 0}
+
+/* ── Status Cards Row ──────────────────────────────────── */
+.status-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px}
+@media(min-width:600px){.status-row{grid-template-columns:repeat(4,1fr)}}
+
+.status-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  padding:18px 16px;position:relative;overflow:hidden;
+  transition:.3s var(--ease);cursor:default;
+}
+.status-card::before{
+  content:'';position:absolute;inset:0;
+  background:var(--glow-color,transparent);opacity:.04;pointer-events:none;
+}
+.status-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.status-card .label{font-size:.68rem;color:var(--fg3);margin-bottom:8px;font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+.status-card .value{font-size:2rem;font-weight:700;line-height:1}
+.status-card .sub{font-size:.72rem;color:var(--fg3);margin-top:6px}
+.status-card .icon{
+  position:absolute;top:14px;right:14px;
+  width:34px;height:34px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+  background:var(--icon-bg,var(--bg3));
+}
+
+/* ── LINE Quota Card ───────────────────────────────────── */
+.quota-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  padding:22px;margin-bottom:28px;
+}
+.quota-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
+.quota-label{display:flex;align-items:center;gap:10px}
+.quota-label .ch-icon{
+  width:40px;height:40px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;
+}
+.quota-label .ch-icon.line{background:rgba(0,195,0,.12)}
+.quota-label .ch-icon.tg{background:rgba(34,158,217,.12)}
+.quota-label h3{font-size:.9rem;font-weight:600;color:var(--fg)}
+.quota-label p{font-size:.72rem;color:var(--fg3);margin-top:2px}
+
+.quota-number{text-align:right}
+.quota-number .num{font-size:2.2rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.quota-number .denom{font-size:.85rem;color:var(--fg3);font-weight:400}
+.quota-number .pct{font-size:.72rem;color:var(--fg3);margin-top:4px}
+
+.progress-wrap{position:relative;height:8px;background:var(--bg3);border-radius:99px;overflow:hidden;margin-bottom:10px}
+.progress-bar{
+  height:100%;border-radius:99px;transition:width 1s var(--ease);
+  background:linear-gradient(90deg,var(--blue),var(--blue2));
+}
+.progress-bar.warning{background:linear-gradient(90deg,var(--orange),var(--orange2))}
+.progress-bar.danger{background:linear-gradient(90deg,var(--red),var(--red2))}
+.progress-bar.full{background:linear-gradient(90deg,#dc2626,#991b1b)}
+
+.quota-meta{display:flex;justify-content:space-between;font-size:.7rem;color:var(--fg3)}
+.quota-alert{
+  margin-top:14px;padding:10px 14px;border-radius:var(--r3);
+  font-size:.75rem;font-weight:500;display:none;align-items:center;gap:8px;
+}
+.quota-alert.warning{background:rgba(255,167,38,.08);border:1px solid rgba(255,167,38,.2);color:var(--orange);display:flex}
+.quota-alert.danger{background:rgba(255,71,87,.08);border:1px solid rgba(255,71,87,.2);color:var(--red);display:flex}
+
+/* ── Channel Status Row ────────────────────────────────── */
+.channel-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px}
+.channel-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  padding:20px;display:flex;align-items:center;gap:14px;
+  transition:.3s var(--ease);
+}
+.channel-card:hover{border-color:var(--border2)}
+.channel-card .ch-icon{
+  width:48px;height:48px;border-radius:14px;font-size:24px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.channel-card.line-card .ch-icon{background:rgba(0,195,0,.1)}
+.channel-card.tg-card   .ch-icon{background:rgba(34,158,217,.1)}
+.channel-info{flex:1;min-width:0}
+.channel-info h4{font-size:.88rem;font-weight:600;color:var(--fg)}
+.channel-info .ch-sub{font-size:.7rem;color:var(--fg3);margin-top:3px}
+.ch-pill{
+  padding:4px 10px;border-radius:50px;font-size:.68rem;font-weight:600;
+  display:inline-flex;align-items:center;gap:4px;margin-top:8px;
+}
+.ch-pill.ok{background:rgba(0,214,143,.1);color:var(--green);border:1px solid rgba(0,214,143,.2)}
+.ch-pill.warn{background:rgba(255,167,38,.1);color:var(--orange);border:1px solid rgba(255,167,38,.2)}
+.ch-pill.err{background:rgba(255,71,87,.1);color:var(--red);border:1px solid rgba(255,71,87,.2)}
+.ch-dot{width:6px;height:6px;border-radius:50%;background:currentColor;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── Today Stats Grid ──────────────────────────────────── */
+.today-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px}
+@media(min-width:760px){.today-grid{grid-template-columns:repeat(4,1fr)}}
+
+.today-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  padding:16px 14px;text-align:center;transition:.3s;
+}
+.today-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.today-card .tc-num{font-size:2rem;font-weight:700;line-height:1;margin-bottom:6px}
+.today-card .tc-label{font-size:.7rem;color:var(--fg3);font-weight:500}
+.today-card .tc-channel{font-size:.65rem;color:var(--fg4);margin-top:4px}
+.today-card.success .tc-num{color:var(--green)}
+.today-card.failed  .tc-num{color:var(--red)}
+.today-card.skipped .tc-num{color:var(--orange)}
+.today-card.tg      .tc-num{color:var(--blue)}
+
+/* ── Log Table ─────────────────────────────────────────── */
+.log-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  overflow:hidden;
+}
+.log-toolbar{
+  padding:14px 18px;display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid var(--border);flex-wrap:wrap;
+}
+.log-toolbar h3{font-size:.88rem;font-weight:600;color:var(--fg);flex:1}
+.filter-btn{
+  padding:5px 12px;border-radius:50px;font-size:.72rem;font-weight:500;
+  border:1px solid var(--border);background:transparent;color:var(--fg3);
+  cursor:pointer;transition:.2s;font-family:var(--sans);
+}
+.filter-btn:hover,.filter-btn.active{
+  background:var(--bg3);color:var(--fg);border-color:var(--border2);
+}
+.filter-btn.active{color:var(--blue);border-color:rgba(79,172,254,.3)}
+
+.log-table-wrap{overflow-x:auto;max-height:420px;overflow-y:auto}
+.log-table{width:100%;border-collapse:collapse;font-size:.78rem}
+.log-table th{
+  padding:10px 14px;text-align:left;color:var(--fg3);font-weight:500;
+  background:var(--bg3);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:2;white-space:nowrap;font-size:.7rem;text-transform:uppercase;
+}
+.log-table td{
+  padding:10px 14px;border-bottom:1px solid var(--border);
+  color:var(--fg2);vertical-align:middle;
+}
+.log-table tr:last-child td{border-bottom:none}
+.log-table tr:hover td{background:var(--bg3)}
+
+.ch-tag{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 9px;border-radius:50px;font-size:.68rem;font-weight:600;
+}
+.ch-tag.line{background:rgba(0,195,0,.1);color:var(--line2);border:1px solid rgba(0,195,0,.2)}
+.ch-tag.tg  {background:rgba(34,158,217,.1);color:var(--tg2);border:1px solid rgba(34,158,217,.2)}
+
+.status-tag{
+  display:inline-block;padding:3px 9px;border-radius:50px;font-size:.67rem;font-weight:600;
+}
+.status-tag.SUCCESS       {background:rgba(0,214,143,.1);color:var(--green);border:1px solid rgba(0,214,143,.2)}
+.status-tag.FAILED        {background:rgba(255,71,87,.1);color:var(--red);border:1px solid rgba(255,71,87,.2)}
+.status-tag.SKIPPED_QUOTA {background:rgba(255,167,38,.1);color:var(--orange);border:1px solid rgba(255,167,38,.2)}
+.status-tag.SKIPPED_OLD_EVENT{background:rgba(100,100,120,.1);color:var(--fg3);border:1px solid var(--border)}
+
+.event-id{font-size:.68rem;color:var(--fg3);font-family:'Courier New',monospace;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.empty-state{
+  padding:48px 20px;text-align:center;color:var(--fg3);font-size:.82rem;
+}
+.empty-state .icon{font-size:2.5rem;margin-bottom:12px}
+
+/* ── Refresh Button ────────────────────────────────────── */
+.refresh-btn{
+  display:flex;align-items:center;gap:6px;
+  padding:7px 16px;border-radius:50px;
+  background:var(--bg3);border:1px solid var(--border);
+  color:var(--fg2);font-size:.78rem;font-weight:500;
+  cursor:pointer;transition:.2s;font-family:var(--sans);
+}
+.refresh-btn:hover{background:var(--bg4);color:var(--fg);border-color:var(--border2)}
+.refresh-btn:active{transform:scale(.95)}
+.refresh-btn svg{transition:.6s}
+.refresh-btn.spinning svg{animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Quota Sync ────────────────────────────────────────── */
+.sync-wrap{
+  display:flex;align-items:center;gap:8px;margin-top:14px;
+  padding:12px 14px;background:var(--bg3);border-radius:var(--r3);
+  border:1px solid var(--border);
+}
+.sync-wrap input{
+  flex:1;background:var(--bg2);border:1px solid var(--border2);
+  border-radius:8px;padding:7px 12px;color:var(--fg);font-size:.82rem;
+  font-family:var(--sans);outline:none;
+}
+.sync-wrap input:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(79,172,254,.1)}
+.sync-wrap .sync-label{font-size:.72rem;color:var(--fg3);white-space:nowrap}
+.sync-btn{
+  padding:7px 16px;border-radius:50px;background:rgba(79,172,254,.12);
+  border:1px solid rgba(79,172,254,.2);color:var(--blue);font-size:.78rem;
+  cursor:pointer;transition:.2s;font-family:var(--sans);font-weight:600;white-space:nowrap;
+}
+.sync-btn:hover{background:rgba(79,172,254,.2)}
+.sync-btn:active{transform:scale(.95)}
+
+/* ── Toast ─────────────────────────────────────────────── */
+#toast{
+  position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-80px);
+  background:var(--bg4);border:1px solid var(--border2);color:var(--fg);
+  padding:10px 20px;border-radius:50px;font-size:.8rem;font-weight:500;
+  z-index:999;transition:.35s var(--ease);pointer-events:none;white-space:nowrap;
+}
+#toast.show{transform:translateX(-50%) translateY(0)}
+#toast.ok{border-color:rgba(0,214,143,.3);color:var(--green)}
+#toast.err{border-color:rgba(255,71,87,.3);color:var(--red)}
+
+/* ── Skeleton ───────────────────────────────────────────── */
+.skel{background:var(--bg3);border-radius:6px;animation:skel 1.2s ease-in-out infinite}
+@keyframes skel{0%,100%{opacity:.5}50%{opacity:1}}
+
+/* ── Auto Refresh badge ─────────────────────────────────── */
+.auto-badge{
+  font-size:.65rem;padding:2px 8px;border-radius:50px;
+  background:rgba(0,214,143,.08);color:var(--green);
+  border:1px solid rgba(0,214,143,.15);
+}
+</style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="topbar-logo">🔔</div>
+  <div>
+    <div class="topbar-title">Notification Center</div>
+    <div class="topbar-sub">LINE OA + Telegram Bot</div>
+  </div>
+  <div class="topbar-spacer"></div>
+  <span class="auto-badge">⟳ Auto 30s</span>
+  <button class="refresh-btn" id="refreshBtn" onclick="loadAll()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+      <path d="M21 3v5h-5"/>
+      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+      <path d="M8 16H3v5"/>
+    </svg>
+    รีเฟรช
+  </button>
+  <div class="topbar-time" id="topbarTime"></div>
+  <a class="topbar-back" href="/admin">← Admin</a>
+</div>
+
+<div class="page">
+
+  <!-- Channel Status -->
+  <div class="section-header">
+    <h2>Channel Status</h2>
+    <span class="badge" id="lastUpdated">—</span>
+  </div>
+  <div class="channel-row">
+    <div class="channel-card line-card">
+      <div class="ch-icon">💚</div>
+      <div class="channel-info">
+        <h4>LINE OA</h4>
+        <div class="ch-sub">Messaging API</div>
+        <div class="ch-pill" id="lineStatus">
+          <span class="ch-dot"></span> กำลังตรวจสอบ...
+        </div>
+      </div>
+    </div>
+    <div class="channel-card tg-card">
+      <div class="ch-icon">✈️</div>
+      <div class="channel-info">
+        <h4>Telegram Bot</h4>
+        <div class="ch-sub" id="tgBotName">Bot Name</div>
+        <div class="ch-pill" id="tgStatus">
+          <span class="ch-dot"></span> กำลังตรวจสอบ...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LINE Quota -->
+  <div class="section-header"><h2>LINE OA Quota</h2></div>
+  <div class="quota-card" id="quotaCard">
+    <div class="quota-header">
+      <div class="quota-label">
+        <div class="ch-icon line">💬</div>
+        <div>
+          <h3>LINE OA Messaging</h3>
+          <p id="quotaMonth">เดือนนี้</p>
+        </div>
+      </div>
+      <div class="quota-number">
+        <div class="num">
+          <span id="quotaUsage">—</span><span class="denom"> / 300</span>
+        </div>
+        <div class="pct" id="quotaPct">—%</div>
+      </div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progressBar" style="width:0%"></div>
+    </div>
+    <div class="quota-meta">
+      <span>0</span>
+      <span id="progressLabel">—</span>
+      <span>300 msg</span>
+    </div>
+
+    <!-- Quota เตือน -->
+    <div class="quota-alert warning" id="alertWarning">
+      ⚠️ Quota ใกล้เต็ม — Telegram ยังส่งได้ตามปกติ
+    </div>
+    <div class="quota-alert danger" id="alertDanger">
+      🚫 LINE Quota เต็ม 300/300 — ระบบหยุดส่ง LINE อัตโนมัติ แต่ Telegram ยังส่งปกติ
+    </div>
+
+    <!-- Sync Manual -->
+    <div class="sync-wrap">
+      <span class="sync-label">Sync จาก LINE Console:</span>
+      <input type="number" id="syncInput" placeholder="ใส่ยอดปัจจุบัน" min="0" max="300">
+      <button class="sync-btn" onclick="syncQuota()">บันทึก</button>
+    </div>
+  </div>
+
+  <!-- Today Notifications -->
+  <div class="section-header"><h2>วันนี้</h2></div>
+  <div class="today-grid">
+    <div class="today-card success">
+      <div class="tc-num" id="lineSuc">—</div>
+      <div class="tc-label">ส่งสำเร็จ</div>
+      <div class="tc-channel">LINE</div>
+    </div>
+    <div class="today-card failed">
+      <div class="tc-num" id="lineFail">—</div>
+      <div class="tc-label">ส่งไม่สำเร็จ</div>
+      <div class="tc-channel">LINE</div>
+    </div>
+    <div class="today-card tg">
+      <div class="tc-num" id="tgSuc">—</div>
+      <div class="tc-label">ส่งสำเร็จ</div>
+      <div class="tc-channel">Telegram</div>
+    </div>
+    <div class="today-card skipped">
+      <div class="tc-num" id="lineSkip">—</div>
+      <div class="tc-label">ข้ามเพราะ Quota</div>
+      <div class="tc-channel">LINE</div>
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- Notification Log -->
+  <div class="section-header">
+    <h2>Notification Log</h2>
+  </div>
+  <div class="log-card">
+    <div class="log-toolbar">
+      <h3>ประวัติการส่ง</h3>
+      <button class="filter-btn active" data-f="all"    onclick="setFilter('all',this)">ทั้งหมด</button>
+      <button class="filter-btn"        data-f="LINE"   onclick="setFilter('LINE',this)">LINE</button>
+      <button class="filter-btn"        data-f="TELEGRAM" onclick="setFilter('TELEGRAM',this)">Telegram</button>
+      <button class="filter-btn"        data-f="FAILED" onclick="setFilter('FAILED',this)">Failed</button>
+    </div>
+    <div class="log-table-wrap">
+      <table class="log-table">
+        <thead>
+          <tr>
+            <th>เวลา</th>
+            <th>Event ID</th>
+            <th>ประเภท</th>
+            <th>ช่องทาง</th>
+            <th>สถานะ</th>
+            <th>หมายเหตุ</th>
+          </tr>
+        </thead>
+        <tbody id="logBody">
+          <tr><td colspan="6" class="empty-state"><div class="icon">📭</div>กำลังโหลด...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+const API = '';
+let _logs = [];
+let _filter = 'all';
+
+// ── Clock ────────────────────────────────────────────────────
+function updateClock(){
+  const now = new Date();
+  document.getElementById('topbarTime').innerHTML =
+    now.toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'numeric'}) + '<br>' +
+    now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ── Toast ────────────────────────────────────────────────────
+function toast(msg, type='ok'){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `show ${type}`;
+  setTimeout(() => el.className = '', 2800);
+}
+
+// ── Load All ─────────────────────────────────────────────────
+async function loadAll(){
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('spinning');
+  document.getElementById('lastUpdated').textContent = 'กำลังโหลด...';
+  try {
+    await Promise.all([loadStatus(), loadLogs()]);
+    const now = new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('lastUpdated').textContent = `อัปเดต ${now}`;
+  } catch(e) {
+    toast('โหลดข้อมูลไม่สำเร็จ: '+e.message, 'err');
+  }
+  btn.classList.remove('spinning');
+}
+
+// ── Load Status (Quota + Channel) ────────────────────────────
+async function loadStatus(){
+  try {
+    const r = await fetch('/api/notify-status', {
+      headers: { Authorization: `Bearer ${localStorage.getItem('it_token') || ''}` }
+    });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error);
+
+    // LINE Quota
+    const q = d.quota?.line || {};
+    const usage = q.usage || 0;
+    const pct   = q.percent || 0;
+
+    document.getElementById('quotaUsage').textContent = usage;
+    document.getElementById('quotaPct').textContent   = pct + '%';
+    document.getElementById('progressLabel').textContent = usage + ' msg';
+    document.getElementById('quotaMonth').textContent = 'เดือน ' + (d.quota?.line?.month || '—');
+
+    // Progress color
+    const bar = document.getElementById('progressBar');
+    bar.style.width = Math.min(pct,100) + '%';
+    bar.className = 'progress-bar' +
+      (pct >= 100 ? ' full' : pct >= 90 ? ' danger' : pct >= 75 ? ' warning' : '');
+
+    // Alert
+    document.getElementById('alertWarning').style.display = (pct >= 75 && pct < 100) ? 'flex' : 'none';
+    document.getElementById('alertDanger').style.display  = (pct >= 100)              ? 'flex' : 'none';
+
+    // LINE Status pill
+    const linePill = document.getElementById('lineStatus');
+    if (usage >= 300) {
+      linePill.className = 'ch-pill err';
+      linePill.innerHTML = '<span class="ch-dot"></span> Quota เต็ม — หยุดส่ง';
+    } else {
+      linePill.className = 'ch-pill ok';
+      linePill.innerHTML = '<span class="ch-dot"></span> ปกติ — ส่งได้';
+    }
+
+    // Telegram Status
+    const tg = d.quota?.telegram || {};
+    const tgPill = document.getElementById('tgStatus');
+    const tgBotName = document.getElementById('tgBotName');
+    if (tg.connected) {
+      tgPill.className = 'ch-pill ok';
+      tgPill.innerHTML = '<span class="ch-dot"></span> Online — ไม่จำกัด';
+      tgBotName.textContent = tg.botName ? '@'+tg.botName : 'Bot Online';
+    } else {
+      tgPill.className = 'ch-pill err';
+      tgPill.innerHTML = '<span class="ch-dot"></span> Offline';
+      tgBotName.textContent = 'ตรวจสอบ Token';
+    }
+
+    // Today stats
+    const today = d.today || {};
+    const line  = today.LINE     || {};
+    const tgS   = today.TELEGRAM || {};
+    document.getElementById('lineSuc').textContent  = (line.SUCCESS  || 0);
+    document.getElementById('lineFail').textContent = (line.FAILED   || 0);
+    document.getElementById('lineSkip').textContent = (line.SKIPPED_QUOTA || 0) + (line.SKIPPED_OLD_EVENT || 0);
+    document.getElementById('tgSuc').textContent    = (tgS.SUCCESS   || 0);
+
+  } catch(e) {
+    console.error('loadStatus', e);
+    // fallback: show mock data ถ้า endpoint ยังไม่มี
+    document.getElementById('quotaUsage').textContent = '—';
+    document.getElementById('lineStatus').innerHTML   = '<span class="ch-dot"></span> ตรวจสอบไม่ได้';
+    document.getElementById('tgStatus').innerHTML     = '<span class="ch-dot"></span> ตรวจสอบไม่ได้';
+  }
+}
+
+// ── Load Logs ────────────────────────────────────────────────
+async function loadLogs(){
+  try {
+    let url = '/api/notification-log?limit=200';
+    if (_filter === 'LINE' || _filter === 'TELEGRAM') url += `&channel=${_filter}`;
+    if (_filter === 'FAILED') url += '&status=FAILED';
+
+    const r = await fetch(url, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('it_token') || ''}` }
+    });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error);
+    _logs = d.logs || [];
+    renderLogs(_logs);
+  } catch(e) {
+    console.error('loadLogs', e);
+    renderLogs([]);
+  }
+}
+
+function renderLogs(logs){
+  const tb = document.getElementById('logBody');
+  if (!logs.length) {
+    tb.innerHTML = `<tr><td colspan="6" class="empty-state">
+      <div class="icon">📭</div>ไม่มีข้อมูล Log
+    </td></tr>`;
+    return;
+  }
+
+  const eventTypeMap = {
+    'new_ticket':   '🎫 Ticket ใหม่',
+    'assigned':     '👤 มอบหมาย',
+    'work_submitted': '🔧 ส่งงาน',
+    'closed':       '✅ ปิดงาน',
+    'revision':     '✏️ แก้ไข',
+    'reassigned':   '🔄 โอนงาน',
+  };
+
+  tb.innerHTML = logs.map(l => {
+    const dt = l.sent_at ? new Date(l.sent_at).toLocaleString('th-TH',{
+      day:'2-digit',month:'2-digit',year:'2-digit',
+      hour:'2-digit',minute:'2-digit'
+    }) : '—';
+    const ch = l.channel || '';
+    const st = l.status  || '';
+    const et = eventTypeMap[l.event_type] || l.event_type || '—';
+
+    return `<tr>
+      <td style="color:var(--fg3);font-size:.7rem;white-space:nowrap">${dt}</td>
+      <td><div class="event-id" title="${esc(l.event_id||'')}">${esc(l.event_id||'—')}</div></td>
+      <td style="white-space:nowrap">${esc(et)}</td>
+      <td><span class="ch-tag ${ch.toLowerCase()}">${ch === 'LINE' ? '💚' : '✈️'} ${ch}</span></td>
+      <td><span class="status-tag ${st}">${stLabel(st)}</span></td>
+      <td style="font-size:.7rem;color:var(--fg3);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(l.error_msg||'—')}</td>
+    </tr>`;
+  }).join('');
+}
+
+function stLabel(s){
+  const m = {
+    'SUCCESS':'✅ สำเร็จ',
+    'FAILED':'❌ ล้มเหลว',
+    'SKIPPED_QUOTA':'⏸ ข้าม (Quota)',
+    'SKIPPED_OLD_EVENT':'⏭ ข้าม (เก่า)',
+  };
+  return m[s] || s;
+}
+
+function esc(s){ return String(s).replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+
+// ── Filter ───────────────────────────────────────────────────
+function setFilter(f, btn){
+  _filter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadLogs();
+}
+
+// ── Sync Quota ───────────────────────────────────────────────
+async function syncQuota(){
+  const val = parseInt(document.getElementById('syncInput').value);
+  if (isNaN(val) || val < 0 || val > 300) {
+    toast('กรุณาใส่ตัวเลข 0–300', 'err'); return;
+  }
+  try {
+    const r = await fetch('/api/line-quota', {
+      method:'PATCH',
+      headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${localStorage.getItem('it_token')||''}` },
+      body: JSON.stringify({ usage: val })
+    });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error);
+    toast(`✅ Sync Quota สำเร็จ: ${val}/300`);
+    document.getElementById('syncInput').value = '';
+    await loadStatus();
+  } catch(e) {
+    toast('Sync ไม่สำเร็จ: '+e.message, 'err');
+  }
+}
+
+// ── Auto Refresh every 30s ────────────────────────────────────
+loadAll();
+setInterval(loadAll, 30_000);
+</script>
+</body>
+</html>
