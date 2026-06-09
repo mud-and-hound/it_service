@@ -920,11 +920,36 @@ app.get('/api/admin/reporters', requireAuth(['superadmin','admin','manager','it_
   } catch(e) { if(!res.headersSent) res.json({ ok:false, error:e.message }); }
 });
 
-// ── Webhooks ────────────────────────────────────────────────
+// ── Telegram Webhook (รับ !groupid command) ────────────────
+app.post('/telegram/webhook', express.json(), async (req, res) => {
+  try {
+    await require('./telegramService').handleWebhook(req.body);
+    res.json({ ok:true });
+  } catch(e) { res.json({ ok:false, error:e.message }); }
+});
+
+// ── Webhooks ─────────────────────────────────────────────────
 app.use('/lark', larkRouter);
 app.use('/line', lineRouter);
 
 // ── Startup ─────────────────────────────────────────────────
+
+// ── ตั้ง Telegram Webhook ตอน startup ──────────────────────
+setTimeout(async () => {
+  try {
+    const token  = process.env.TELEGRAM_BOT_TOKEN;
+    const appUrl = process.env.APP_URL || 'https://it-service-56im.onrender.com';
+    if (token) {
+      const axios = require('axios');
+      const r = await axios.post(`https://api.telegram.org/bot${token}/setWebhook`, {
+        url: `${appUrl}/telegram/webhook`,
+        allowed_updates: ['message']
+      }, { timeout: 8000 });
+      console.log('[TG] Webhook set:', appUrl + '/telegram/webhook', r.data?.ok);
+    }
+  } catch(e) { console.warn('[TG] setWebhook failed:', e.message); }
+}, 5000);
+
 setTimeout(async () => {
   try { await ensureFieldMap(); console.log('[App] fieldMap ready'); } catch(e) { console.warn('[App]',e.message); }
 }, 3000);
