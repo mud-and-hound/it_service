@@ -1201,10 +1201,12 @@ function renderTrackModeContent(){
   if(trackMode==='id'){
     el.innerHTML=`
       <div class="tsrch">
-        <input id="trk-id" placeholder="${l.trackPH}" onkeydown="if(event.key==='Enter')doTrack()"/>
+        <input id="trk-id" placeholder="${lang==='th'?'พิมพ์รหัส Ticket, สาขา, ประเภท...':'Type ticket ID, branch, type...'}" oninput="liveTrackSearch(this.value)" onkeydown="if(event.key==='Enter')doTrack()"/>
         <button onclick="doTrack()">${l.trackBtn}</button>
       </div>
       <div id="trk-result"></div>`;
+    // โหลด cache ล่วงหน้าเพื่อ live search เร็ว
+    _allTicketsCache=null;
   } else {
     // Branch filter mode
     const branchLabel=trackBranch
@@ -1216,6 +1218,8 @@ function renderTrackModeContent(){
       {v:'pending',     l:lang==='th'?'รอดำเนินการ':'Pending'},
       {v:'assigned',    l:lang==='th'?'มอบหมายช่าง':'Assigned'},
       {v:'in_progress', l:lang==='th'?'กำลังดำเนินการ':'In Progress'},
+      {v:'waiting_parts',  l:lang==='th'?'📦 รออะไหล่':'Waiting Parts'},
+      {v:'waiting_vendor', l:lang==='th'?'🔧 รอซัพซ่อม':'Waiting Vendor'},
       {v:'review',      l:lang==='th'?'รอตรวจรับ':'Review'},
       {v:'completed',   l:lang==='th'?'เสร็จสิ้น':'Completed'},
       {v:'cancelled',   l:lang==='th'?'ยกเลิก':'Cancelled'},
@@ -1287,6 +1291,14 @@ function setTrackStatus(s){
   renderTrackModeContent();
 }
 
+// เทียบ branchCode แบบยืดหยุ่น — กันปัญหา "K.0025" vs "0025" vs "25"
+function _branchCodeMatch(a,b){
+  const norm=s=>String(s||'').trim();
+  if(norm(a)===norm(b) && norm(a)!=='') return true;
+  const strip=s=>norm(s).replace(/^K\.?/i,'').replace(/^0+/,'')||'0';
+  return strip(a)===strip(b) && strip(a)!=='0';
+}
+
 async function loadBranchTickets(branchCode){
   const el=document.getElementById('trk-branch-result');
   if(!el)return;
@@ -1296,9 +1308,9 @@ async function loadBranchTickets(branchCode){
     const d=await fetchWithTimeout('/api/tickets',{headers},15000).then(r=>r.json());
     if(!d.ok)throw new Error(d.error||'error');
     // กรองตาม branchCode และ brand (ป้องกัน branchCode ซ้ำข้ามแบรนด์)
-    const currentBrand=_reporterUser?.brand||brand?.n||null;
+    const currentBrand=_reporterUser?.brand||(brand?brand.n:null);
     let tickets=(d.tickets||[]).filter(tk=>{
-      const codeMatch=tk.branchCode===branchCode||tk.branchCode===String(branchCode);
+      const codeMatch=_branchCodeMatch(tk.branchCode,branchCode);
       const brandMatch=!currentBrand||!tk.brand||(tk.brand===currentBrand);
       return codeMatch && brandMatch;
     });
@@ -1306,6 +1318,8 @@ async function loadBranchTickets(branchCode){
     if(trackStatusFilter){
       tickets=tickets.filter(tk=>tkStatusKey(tk.status)===trackStatusFilter);
     }
+    // เก็บ cache ให้ showBranchTicketDetail ใช้แสดง timeline
+    window._branchTicketsCache=tickets;
     if(!tickets.length){
       const emptyMsg=trackStatusFilter
         ?`${lang==='th'?'ไม่พบ Ticket สถานะนี้ในสาขานี้':'No tickets with this status for this branch'}`
@@ -1313,6 +1327,8 @@ async function loadBranchTickets(branchCode){
       el.innerHTML=`<div class="empty">${emptyMsg}</div>`;
       return;
     }
+    // เรียงล่าสุดก่อน
+    tickets.sort((a,b)=>String(b.id||'').localeCompare(String(a.id||'')));
     el.innerHTML=`
       <div style="font-size:11px;color:var(--fg4);margin-bottom:8px;font-family:var(--mono)">${lang==='th'?`พบ ${tickets.length} Ticket`:`Found ${tickets.length} tickets`}${trackStatusFilter?` (${TK_STATUS_CFG[trackStatusFilter]?.label||trackStatusFilter})`:''}
       </div>
@@ -1337,7 +1353,15 @@ async function loadBranchTickets(branchCode){
 }
 
 function showBranchTicketDetail(rid,tid){
-  // Switch to ID mode and search
+  // หา ticket จาก cache แล้วแสดง timeline ในตำแหน่งเดิม (ไม่ต้องสลับ mode)
+  const tk=(window._branchTicketsCache||[]).find(x=>String(x._recordId)===String(rid)||String(x.id)===String(tid));
+  const el=document.getElementById('trk-branch-result');
+  if(tk && el){
+    _trkOpen=0;
+    el.innerHTML=`<button onclick="renderTrackModeContent()" style="background:none;border:none;color:var(--fg3);font-size:13px;cursor:pointer;padding:8px 0;font-family:var(--sans)">← ${lang==='th'?'กลับ':'Back'}</button>`+renderTicketTimeline(tk);
+    return;
+  }
+  // fallback: สลับไป id mode
   trackMode='id';
   renderTrack();
   const input=document.getElementById('trk-id');
@@ -1345,26 +1369,30 @@ function showBranchTicketDetail(rid,tid){
 }
 
 const TK_STATUS_CFG={
-  'pending':     {label:'รอดำเนินการ',    pillBg:'#F1EFE8',pillC:'#5F5E5A',dot:'#B4B2A9'},
-  'assigned':    {label:'มอบหมายช่าง',   pillBg:'#E6F1FB',pillC:'#185FA5',dot:'#378ADD'},
-  'in_progress': {label:'กำลังดำเนินการ',pillBg:'#FAEEDA',pillC:'#854F0B',dot:'#EF9F27'},
-  'review':      {label:'รอตรวจรับ',     pillBg:'#EEEDFE',pillC:'#3C3489',dot:'#7F77DD'},
-  'completed':   {label:'เสร็จสิ้น',     pillBg:'#EAF3DE',pillC:'#3B6D11',dot:'#3B6D11'},
-  'cancelled':   {label:'ยกเลิก',        pillBg:'#FAECE7',pillC:'#993C1D',dot:'#D85A30'},
+  'pending':        {label:'รอดำเนินการ',    pillBg:'#F1EFE8',pillC:'#5F5E5A',dot:'#B4B2A9'},
+  'assigned':       {label:'มอบหมายช่าง',   pillBg:'#E6F1FB',pillC:'#185FA5',dot:'#378ADD'},
+  'in_progress':    {label:'กำลังดำเนินการ',pillBg:'#FAEEDA',pillC:'#854F0B',dot:'#EF9F27'},
+  'waiting_parts':  {label:'รออะไหล่',      pillBg:'#F3E8FE',pillC:'#7E22CE',dot:'#A855F7'},
+  'waiting_vendor': {label:'รอซัพซ่อม',     pillBg:'#FCE7F3',pillC:'#BE185D',dot:'#EC4899'},
+  'review':         {label:'รอตรวจรับ',     pillBg:'#EEEDFE',pillC:'#3C3489',dot:'#7F77DD'},
+  'completed':      {label:'เสร็จสิ้น',     pillBg:'#EAF3DE',pillC:'#3B6D11',dot:'#3B6D11'},
+  'cancelled':      {label:'ยกเลิก',        pillBg:'#FAECE7',pillC:'#993C1D',dot:'#D85A30'},
 };
 const TK_PROG=[
   {k:'pending',l:'รับเรื่อง'},{k:'assigned',l:'มอบหมายช่าง'},
   {k:'in_progress',l:'ดำเนินการ'},{k:'completed',l:'เสร็จสิ้น'},
 ];
-const TK_ORD=['pending','assigned','in_progress','review','completed','cancelled'];
+const TK_ORD=['pending','assigned','in_progress','waiting_parts','waiting_vendor','review','completed','cancelled'];
 const TK_DOTS=['#3B6D11','#639922','#97C459','#EF9F27','#378ADD','#D85A30'];
 
 function tkStatusKey(raw){
   if(!raw)return'pending';
-  const r=raw.toLowerCase().replace(/[⏱️⚙️✅❌\s]/g,'');
+  const r=raw.toLowerCase().replace(/[⏱️⚙️✅❌📦🔧\s]/g,'');
   if(/cancel|ยกเลิก/.test(r))return'cancelled';
   if(/complet|เสร็จ|done/.test(r))return'completed';
   if(/review|ตรวจ/.test(r))return'review';
+  if(/รออะไหล่|waiting_parts|waitingparts/.test(r))return'waiting_parts';
+  if(/รอซัพ|waiting_vendor|waitingvendor/.test(r))return'waiting_vendor';
   if(/progress|ระหว่าง|inprogress/.test(r))return'in_progress';
   if(/assign|มอบ/.test(r))return'assigned';
   return'pending';
@@ -1382,6 +1410,12 @@ function buildTkTimeline(tk){
   if(ci>=TK_ORD.indexOf('in_progress'))
     hist.push({title:'ช่างเริ่มทำงานแล้ว',sub:`ช่าง${tk.engineerName||'-'} · เดินทางถึงสาขา`,
       rows:[['เวลาเริ่มงาน',tk.startedAt||'-'],['GPS',tk.completedLat?`${tk.completedLat}, ${tk.completedLng}`:'-']],dot:'#EF9F27'});
+  if(sid==='waiting_parts')
+    hist.push({title:'📦 รออะไหล่',sub:`ช่าง${tk.engineerName||'-'} · งานหยุดชั่วคราว`,
+      rows:[['เหตุผล',tk.stuckNote||'รออะไหล่/อุปกรณ์'],['ช่างผู้ดูแล',tk.engineerName||'-']],dot:'#A855F7'});
+  if(sid==='waiting_vendor')
+    hist.push({title:'🔧 รอซัพดำเนินการซ่อม',sub:`ช่าง${tk.engineerName||'-'} · ส่งซัพภายนอก`,
+      rows:[['เหตุผล',tk.stuckNote||'รอซัพภายนอกซ่อม'],['ช่างผู้ดูแล',tk.engineerName||'-']],dot:'#EC4899'});
   if(ci>=TK_ORD.indexOf('review'))
     hist.push({title:'ช่างส่งงาน — รอ Admin ตรวจรับ',sub:`ช่าง${tk.engineerName||'-'}`,
       rows:[['รายละเอียดงาน',tk.workDetail||'-'],['อะไหล่',tk.partsUsed||'-'],['ชั่วโมงทำงาน',tk.workHours?tk.workHours+' ชม.':'-']],dot:'#7F77DD'});
@@ -1459,20 +1493,79 @@ function renderTicketTimeline(tk){
   </div>`;
 }
 
+// ══ LIVE TRACK SEARCH — พิมพ์ปุ๊บขึ้นผลลัพธ์ทันที (fuzzy) ══
+let _allTicketsCache=null, _liveSearchTimer=null;
+
+async function liveTrackSearch(q){
+  q=(q||'').trim().toLowerCase();
+  const out=document.getElementById('trk-result');
+  if(!out)return;
+  if(q.length<1){out.innerHTML='';return;}
+
+  // debounce 220ms กัน spam
+  clearTimeout(_liveSearchTimer);
+  out.innerHTML=`<div class="empty" style="padding:16px">${lang==='th'?'กำลังค้นหา...':'Searching...'}</div>`;
+  _liveSearchTimer=setTimeout(async()=>{
+    try{
+      if(!_allTicketsCache){
+        const headers={'Content-Type':'application/json'};
+        if(_reporterToken)headers['Authorization']='Bearer '+_reporterToken;
+        const d=await fetchWithTimeout('/api/tickets',{headers},15000).then(r=>r.json());
+        if(!d.ok)throw new Error(d.error||'error');
+        _allTicketsCache=d.tickets||[];
+      }
+      // fuzzy: ค้นทุก field ที่เกี่ยวข้อง
+      const currentBrand=_reporterUser?.brand||(brand?brand.n:null);
+      const matches=_allTicketsCache.filter(tk=>{
+        // ถ้า login มาแบรนด์ไหน เห็นเฉพาะแบรนด์ตัวเอง
+        if(currentBrand && tk.brand && tk.brand!==currentBrand) return false;
+        const hay=`${tk.id||''} ${tk.type||''} ${tk.detail||''} ${tk.branchCode||''} ${tk.reporter||''} ${tk.brand||''}`.toLowerCase();
+        return hay.includes(q);
+      });
+      // เรียงล่าสุดก่อน
+      matches.sort((a,b)=>String(b.id||'').localeCompare(String(a.id||'')));
+      const shown=matches.slice(0,25);
+
+      if(!shown.length){
+        out.innerHTML=`<div class="empty">${lang==='th'?'ไม่พบ Ticket ที่ตรงกับ':'No match for'} "${esc(q)}"</div>`;
+        return;
+      }
+      out.innerHTML=`
+        <div style="font-size:11px;color:var(--fg4);margin:8px 0;font-family:var(--mono)">${lang==='th'?`พบ ${matches.length} รายการ`:`${matches.length} found`}${matches.length>25?` (${lang==='th'?'แสดง 25 แรก':'showing 25'})`:''}</div>
+        <div class="tklist">
+          ${shown.map(tk=>{
+            const sk=tkStatusKey(tk.status);
+            const scfg=TK_STATUS_CFG[sk]||TK_STATUS_CFG.pending;
+            return`<div class="tkitem" onclick="selectTrackTicket('${esc(tk._recordId||tk.id||'')}')">
+              <div class="tkitem-id">${esc(tk.id||tk._recordId||'-')}</div>
+              <div class="tkitem-type">${esc(tk.type||'-')}</div>
+              <div class="tkitem-meta">
+                <span class="pill" style="background:${scfg.pillBg};color:${scfg.pillC}">${statusLabel(tk.status)}</span>
+                <span style="font-family:var(--mono);font-size:11px">${esc(tk.branchCode||'')}</span>
+                <span>${esc(tk.sentDate||'-')}</span>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>`;
+    }catch(e){out.innerHTML=`<div class="empty">${esc(e.message)}</div>`;}
+  },220);
+}
+
+// เลือก ticket จากผลลัพธ์ live → แสดง timeline เต็ม
+function selectTrackTicket(rid){
+  const tk=(_allTicketsCache||[]).find(x=>String(x._recordId)===String(rid)||String(x.id)===String(rid));
+  if(!tk)return;
+  _trkOpen=0;
+  const out=document.getElementById('trk-result');
+  if(out)out.innerHTML=`<button onclick="renderTrackModeContent()" style="background:none;border:none;color:var(--fg3);font-size:13px;cursor:pointer;padding:8px 0;font-family:var(--sans)">← ${lang==='th'?'กลับไปค้นหา':'Back to search'}</button>`+renderTicketTimeline(tk);
+}
+
 async function doTrack(){
   const l=t();
   const id=(document.getElementById('trk-id')?.value||'').trim();
   if(!id){toast(l.ticketNotFound);return;}
-  const out=document.getElementById('trk-result');
-  out.innerHTML='<div class="empty">...</div>';
-  try{
-    const d=await fetch('/api/tickets').then(r=>r.json());
-    if(!d.ok)throw new Error(d.error||'Error');
-    const tk=(d.tickets||[]).find(x=>(x.id||'').toLowerCase()===id.toLowerCase()||x._recordId===id);
-    if(!tk)throw new Error(l.ticketNotFound+': '+id);
-    _trkOpen=0;
-    out.innerHTML=renderTicketTimeline(tk);
-  }catch(e){out.innerHTML=`<div class="empty">${esc(e.message)}</div>`;}
+  // ถ้ามีข้อความ → ใช้ live search แสดงผล (fuzzy)
+  liveTrackSearch(id);
 }
 
 // ══ CLOCK ══════════════════════════════════════════════════
