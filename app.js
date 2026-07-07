@@ -485,11 +485,15 @@ function getBrand(rid, body) { return body?.brand || _ticketBrandCache.get(rid) 
 // ✅ เปลี่ยน lineNotify → notifyHub (ส่งทั้ง LINE + Telegram)
 app.post('/api/tickets', async (req, res) => {
   try {
-    const { reporter, phone, brand, branchCode, type, detail, location } = req.body || {};
+    const { reporter, phone, brand, branchCode, branch_code, type, detail, location } = req.body || {};
+    // รับทั้ง branchCode (report.html) และ branch_code (admin.html) — กันสาขาหายใน notify
+    const finalBranch = branchCode || branch_code || '';
     if (!reporter||!phone||!brand||!type||!detail) return res.json({ ok:false, error:'กรุณากรอกข้อมูลให้ครบ' });
     const _n = new Date();
     const sentDateISO = `${_n.getFullYear()}-${String(_n.getMonth()+1).padStart(2,'0')}-${String(_n.getDate()).padStart(2,'0')}`;
-    const t = await createTicket({ reporter,phone,brand,branchCode:branchCode||'',type,detail,location:location||'',status:'รอดำเนินการ ⏱️',sentDate:sentDateISO });
+    const t = await createTicket({ reporter,phone,brand,branchCode:finalBranch,type,detail,location:location||'',status:'รอดำเนินการ ⏱️',sentDate:sentDateISO });
+    // กัน branchCode หายใน fallback ของ createTicket — set ให้ชัวร์ก่อน notify
+    if (t && !t.branchCode) t.branchCode = finalBranch;
     const log = addLog({ action:'create_ticket', ticketId:t._recordId, ticketLabel:t.id, detail:`สร้างโดย ${reporter} | ${brand}` });
     broadcast('ticket_created', { ticket:t });
     // ── HYBRID NOTIFY: LINE + Telegram ──
