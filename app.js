@@ -243,10 +243,13 @@ app.get('/api/branches', async (req, res) => {
       result[brand].push({
         id:           b.id,
         code:         b.code,
+        shortCode:    b.shortCode || b.short_code || '',
         nameTh:       b.nameTh || b.name_th || '',
         nameEn:       b.nameEn || b.name_en || '',
         ip:           b.ip || '',
         phone:        b.phone || '',
+        storePhone:   b.storePhone   || b.store_phone   || '',
+        managerPhone: b.managerPhone || b.manager_phone || '',
         location_lat:  b.location_lat  || null,
         location_lng:  b.location_lng  || null,
         location_name: b.location_name || '',
@@ -508,21 +511,26 @@ app.post('/api/tickets/:rid/accept', requireAuth(['engineer','lead_engineer','ad
 // ── PATCH status ─────────────────────────────────────────────
 app.patch('/api/tickets/:rid/status', requireAuth(), async (req, res) => {
   try {
-    const { status, started_at, completed_lat, completed_lng } = req.body || {};
+    const { status, started_at, completed_lat, completed_lng, stuck_note } = req.body || {};
     if (!status) return res.json({ ok:false, error:'Missing status' });
     const brand = getBrand(req.params.rid, req.body);
     const updates = { status, brand };
     if (started_at) updates.started_at = started_at;
     if (completed_lat) updates.completed_lat = completed_lat;
     if (completed_lng) updates.completed_lng = completed_lng;
+    if (stuck_note) updates.stuck_note = stuck_note;
     const t = await updateTicket(req.params.rid, updates);
     try { invalidateCache(); } catch(_) {}
-    addLog({ user:req.user, action:'update_status', ticketId:req.params.rid, detail:`สถานะ -> ${status}` });
+    addLog({ user:req.user, action:'update_status', ticketId:req.params.rid, detail:`สถานะ -> ${status}${stuck_note?` (${stuck_note})`:''}` });
     broadcast('ticket_updated', { recordId:req.params.rid, status, ts:new Date().toISOString() });
     if (status.includes('แก้ไข')||status.includes('revision')) {
       const eng = getAllUsers().find(u=>u.name===t.engineerName);
       // ✅ เปลี่ยน lineNotify → notifyHub
       notifyHub.notifyRevision(t, eng?.line_user_id, eng?.telegram_user_id).catch(e=>console.error('[NotifyHub revision]',e.message));
+    }
+    // ── แจ้ง Admin เมื่อช่างติดขัด (รออะไหล่/รอซัพดำเนินการซ่อม) ──
+    if (status.includes('รออะไหล่')||status.includes('รอซัพ')) {
+      notifyHub.notifyStuckStatus?.(t, status, stuck_note).catch(e=>console.error('[NotifyHub stuck]',e.message));
     }
     res.json({ ok:true, ticket:t });
   } catch(e) { if(!res.headersSent) res.json({ ok:false, error:e.message }); }
