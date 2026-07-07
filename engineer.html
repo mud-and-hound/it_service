@@ -340,6 +340,11 @@ a{color:inherit;text-decoration:none}
 .tab-btn:hover{color:var(--fg)}
 .tab-btn.on{color:var(--fg);font-weight:700}
 .tab-btn.on::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--fg);border-radius:2px 2px 0 0}
+.tab-count{display:none;font-size:11px;font-weight:700;min-width:18px;padding:1px 6px;border-radius:9px;background:var(--fg);color:var(--bg);margin-left:2px;vertical-align:middle}
+.tab-count.show{display:inline-block}
+.tab-btn[data-tab="parts"] .tab-count.show{background:#a855f7;color:#fff}
+.tab-btn[data-tab="vendor"] .tab-count.show{background:#ec4899;color:#fff}
+.tab-btn[data-tab="review"] .tab-count.show{background:#0ea5e9;color:#fff}
 .tab-panel{display:none}.tab-panel.on{display:block;animation:up .25s var(--ease)}
 
 /* ── ACCORDION ── */
@@ -462,14 +467,18 @@ a{color:inherit;text-decoration:none}
       <div class="content-inner">
         <div id="eng-stats"></div>
         <div class="tabs" id="eng-tabs">
-          <button class="tab-btn on" data-tab="active" onclick="switchEngTab('active')">งานที่รับ</button>
-          <button class="tab-btn" data-tab="review" onclick="switchEngTab('review')">งานตรวจ</button>
+          <button class="tab-btn on" data-tab="active" onclick="switchEngTab('active')">งานที่รับ <span class="tab-count" id="tc-active"></span></button>
+          <button class="tab-btn" data-tab="parts" onclick="switchEngTab('parts')">📦 รออะไหล่ <span class="tab-count" id="tc-parts"></span></button>
+          <button class="tab-btn" data-tab="vendor" onclick="switchEngTab('vendor')">🔧 รอซัพ <span class="tab-count" id="tc-vendor"></span></button>
+          <button class="tab-btn" data-tab="review" onclick="switchEngTab('review')">งานตรวจ <span class="tab-count" id="tc-review"></span></button>
           <button class="tab-btn" data-tab="done" onclick="switchEngTab('done')">งานเสร็จ</button>
           <button class="tab-btn" data-tab="history" onclick="switchEngTab('history')">ประวัติ</button>
           <button class="tab-btn" data-tab="settings" onclick="switchEngTab('settings')">ตั้งค่า</button>
         </div>
         <div id="tab-dashboard" class="tab-panel on"></div>
         <div id="tab-active" class="tab-panel"></div>
+        <div id="tab-parts" class="tab-panel"></div>
+        <div id="tab-vendor" class="tab-panel"></div>
         <div id="tab-review" class="tab-panel"></div>
         <div id="tab-done" class="tab-panel"></div>
         <div id="tab-history" class="tab-panel"></div>
@@ -1409,7 +1418,7 @@ function switchEngTab(t){
     b.classList.toggle('on', b.getAttribute('onclick')?.includes("'"+t+"'"));
   });
   // Update topbar title
-  const titles={dashboard:'Dashboard',active:'งานของฉัน',review:'ตรวจงาน',done:'งานเสร็จ',history:'ประวัติ',settings:'ตั้งค่า',emergency:'ฉุกเฉิน'};
+  const titles={dashboard:'Dashboard',active:'งานของฉัน',parts:'📦 รออะไหล่',vendor:'🔧 รอซัพดำเนินการซ่อม',review:'ตรวจงาน',done:'งานเสร็จ',history:'ประวัติ',settings:'ตั้งค่า',emergency:'ฉุกเฉิน'};
   const el=document.getElementById('top-title');
   if(el)el.textContent=titles[t]||t;
   // Hide stats bar on dashboard (dashboard has its own stats)
@@ -1420,11 +1429,21 @@ function switchEngTab(t){
 }
 
 function renderEngTab(){
-  const active = tickets.filter(t=>/อยู่ระหว่างดำเนินการ|in_progress|assigned|accepted|ระหว่าง|pending|รอดำเนินการ|รออะไหล่|รอซัพ|waiting_parts|waiting_vendor/.test(t.status||''));
+  // ⚠️ active = เฉพาะกำลังทำ/รอดำเนินการ — ไม่รวมรออะไหล่/รอซัพ (แยกแถบแล้ว)
+  const active = tickets.filter(t=>/อยู่ระหว่างดำเนินการ|in_progress|assigned|accepted|ระหว่าง|pending|รอดำเนินการ/.test(t.status||'')&&!/รออะไหล่|รอซัพ|waiting_parts|waiting_vendor/.test(t.status||''));
+  const parts  = tickets.filter(t=>/รออะไหล่|waiting_parts/.test(t.status||''));
+  const vendor = tickets.filter(t=>/รอซัพ|waiting_vendor/.test(t.status||''));
   const review = tickets.filter(t=>/ตรวจงาน|review/.test(t.status||''));
   const done   = tickets.filter(t=>/เสร็จสิ้น|completed|done/.test(t.status||''));
   const total  = tickets.length;
   const mx = Math.max(total,1);
+
+  // Badge counts บนแถบ
+  const setBadge=(id,n)=>{const el=document.getElementById(id);if(el){el.textContent=n;el.classList.toggle('show',n>0);}};
+  setBadge('tc-active',active.length);
+  setBadge('tc-parts',parts.length);
+  setBadge('tc-vendor',vendor.length);
+  setBadge('tc-review',review.length);
 
   // Stats bar — ซ่อนทุกแท็บ เพราะ Dashboard มี stats ของตัวเอง
   const statsEl = document.getElementById('eng-stats');
@@ -1441,6 +1460,8 @@ function renderEngTab(){
 
   if(engTab==='dashboard')       renderEngDashboard();
   else if(engTab==='active')     renderEngJobList('tab-active', active, true);
+  else if(engTab==='parts')      renderEngJobList('tab-parts', parts, true);
+  else if(engTab==='vendor')     renderEngJobList('tab-vendor', vendor, true);
   else if(engTab==='review')     renderEngJobList('tab-review', review, false);
   else if(engTab==='done')       renderEngJobList('tab-done', done, false);
   else if(engTab==='history')    renderEngHistory();
