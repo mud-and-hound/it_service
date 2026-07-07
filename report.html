@@ -1308,10 +1308,13 @@ async function loadBranchTickets(branchCode){
     const d=await fetchWithTimeout('/api/tickets',{headers},15000).then(r=>r.json());
     if(!d.ok)throw new Error(d.error||'error');
     // กรองตาม branchCode และ brand (ป้องกัน branchCode ซ้ำข้ามแบรนด์)
-    const currentBrand=_reporterUser?.brand||(brand?brand.n:null);
+    // normalize brand: ตัด apostrophe/ช่องว่าง กัน "Greyhound Cafe" vs "Greyhound Cafe'"
+    const normBrand=b=>String(b||'').toLowerCase().replace(/['\s]/g,'');
+    const pickedBrand=trackBranch?._brand||_reporterUser?.brand||(brand?brand.n:null);
+    const cb=normBrand(pickedBrand);
     let tickets=(d.tickets||[]).filter(tk=>{
       const codeMatch=_branchCodeMatch(tk.branchCode,branchCode);
-      const brandMatch=!currentBrand||!tk.brand||(tk.brand===currentBrand);
+      const brandMatch=!cb||!tk.brand||normBrand(tk.brand)===cb;
       return codeMatch && brandMatch;
     });
     // Apply status filter
@@ -1514,12 +1517,9 @@ async function liveTrackSearch(q){
         if(!d.ok)throw new Error(d.error||'error');
         _allTicketsCache=d.tickets||[];
       }
-      // fuzzy: ค้นทุก field ที่เกี่ยวข้อง
-      const currentBrand=_reporterUser?.brand||(brand?brand.n:null);
+      // fuzzy: ค้นทุก field — พิมพ์อะไรก็เด้งทุก ticket ที่เกี่ยวข้อง (ค้นทั้ง DB)
       const matches=_allTicketsCache.filter(tk=>{
-        // ถ้า login มาแบรนด์ไหน เห็นเฉพาะแบรนด์ตัวเอง
-        if(currentBrand && tk.brand && tk.brand!==currentBrand) return false;
-        const hay=`${tk.id||''} ${tk.type||''} ${tk.detail||''} ${tk.branchCode||''} ${tk.reporter||''} ${tk.brand||''}`.toLowerCase();
+        const hay=`${tk.id||''} ${tk.type||''} ${tk.detail||''} ${tk.branchCode||''} ${tk.reporter||''} ${tk.brand||''} ${tk.engineerName||''}`.toLowerCase();
         return hay.includes(q);
       });
       // เรียงล่าสุดก่อน
