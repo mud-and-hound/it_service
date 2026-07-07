@@ -4375,11 +4375,14 @@ function renderNotifList(){
  const list=document.getElementById('notif-list');
  if(!list)return;
  if(!notifications.length){list.innerHTML='<div class="notif-empty">ไม่มีการแจ้งเตือนใหม่</div>';return;}
+ // ตัด SVG tag ดิบออกจากข้อความ (กัน <svg><use.../></svg> โผล่เป็น text)
+ const stripSvg=s=>String(s||'').replace(/<svg[^>]*>[\s\S]*?<\/svg>/g,'').replace(/\s+/g,' ').trim();
+ const dotColor={success:'#22c55e',error:'#ef4444',warn:'#f59e0b',info:'#4facfe'};
  list.innerHTML=notifications.map(n=>`
  <div class="notif-item${n.read?'':' unread'}" onclick="markRead(${n.id})">
- <div class="notif-dot${n.read?' read':''}"></div>
+ <div class="notif-dot${n.read?' read':''}" style="background:${n.read?'':dotColor[n.type]||dotColor.info}"></div>
  <div class="notif-body">
- <div class="notif-msg">${esc(n.msg)}</div>
+ <div class="notif-msg">${esc(stripSvg(n.msg))}</div>
  <div class="notif-time">${n.time.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})}</div>
  </div>
  </div>`).join('');
