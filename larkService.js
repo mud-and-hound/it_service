@@ -39,6 +39,7 @@ function mapTicket(t) {
     createdAt:    t.createdAt    || t.created_at   || '',
     sla:          t.sla          || '',
     adminNote:    t.adminNote    || t.admin_note   || '',
+    stuckNote:    t.stuckNote    || t.stuck_note   || '',
     closedAt:     t.closedAt     || t.closed_at    || '',
     closedBy:     t.closedBy     || t.closed_by    || '',
     completedAt:  t.completedAt  || t.completed_at || '',
@@ -55,14 +56,19 @@ function mapTicket(t) {
 function mapStatus(s) {
   if (!s) return 'รอดำเนินการ ⏱️';
   const map = {
-    'pending':     'รอดำเนินการ ⏱️',
-    'in_progress': 'อยู่ระหว่างดำเนินการ ⚙️',
-    'review':      'ตรวจงาน',
-    'done':        'เสร็จสิ้น ✅',
-    'cancelled':   'ยกเลิก ❌',
+    'pending':        'รอดำเนินการ ⏱️',
+    'in_progress':    'อยู่ระหว่างดำเนินการ ⚙️',
+    'waiting_parts':  'รออะไหล่ 📦',
+    'waiting_vendor': 'รอซัพดำเนินการซ่อม 🔧',
+    'review':         'ตรวจงาน',
+    'done':           'เสร็จสิ้น ✅',
+    'cancelled':      'ยกเลิก ❌',
   };
   if (map[s]) return map[s];
   // Thai string ที่อาจมี emoji แล้ว — normalize
+  // ⚠️ ลำดับสำคัญ: เช็ค 2 สถานะใหม่ก่อน "รอดำเนินการ" กัน match ผิด
+  if (s.includes('รออะไหล่'))             return 'รออะไหล่ 📦';
+  if (s.includes('รอซัพ'))                return 'รอซัพดำเนินการซ่อม 🔧';
   if (s.includes('รอดำเนินการ'))          return 'รอดำเนินการ ⏱️';
   if (s.includes('อยู่ระหว่างดำเนินการ')) return 'อยู่ระหว่างดำเนินการ ⚙️';
   if (s.includes('ตรวจงาน'))              return 'ตรวจงาน';
@@ -74,6 +80,10 @@ function mapStatus(s) {
 // Map status Thai → MySQL English
 function mapStatusReverse(s) {
   if (!s) return 'pending';
+  // ⚠️ ลำดับสำคัญ: เช็ค 2 สถานะใหม่ก่อน "รอดำเนินการ" กัน match ผิด
+  // (เผื่อ frontend ส่ง key อังกฤษมาตรงๆ ก็รองรับด้วย)
+  if (s === 'waiting_parts'  || s.includes('รออะไหล่')) return 'waiting_parts';
+  if (s === 'waiting_vendor' || s.includes('รอซัพ'))    return 'waiting_vendor';
   if (s.includes('รอดำเนินการ'))          return 'pending';
   if (s.includes('อยู่ระหว่างดำเนินการ')) return 'in_progress';
   if (s.includes('ตรวจงาน'))              return 'review';
@@ -168,6 +178,8 @@ async function updateTicket(recordId, data) {
     // ── Admin / Close fields (เคยหายไป — ทำให้ปิดงานไม่สำเร็จ) ──
     if (data.adminNote !== undefined)
       payload.admin_note = data.adminNote;
+    if (data.stuck_note !== undefined)
+      payload.stuck_note = data.stuck_note;
     if (data.closedBy !== undefined)
       payload.closed_by = data.closedBy;
     if (data.closedAt !== undefined)
