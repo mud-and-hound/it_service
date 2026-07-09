@@ -201,6 +201,20 @@ a{color:inherit;text-decoration:none}
 .qc-desc{font-size:12px;color:var(--fg3);line-height:1.55}
 .qc-badge{display:inline-block;margin-top:8px;font-family:var(--mono);font-size:9px;padding:2px 6px;border-radius:4px;background:var(--bg3);color:var(--fg4)}
 @media(max-width:540px){.qcard{padding:16px 10px}.qc-desc{display:none}}
+/* Guide cards — คู่มือการใช้งาน */
+.guides{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:860px){.guides{grid-template-columns:1fr}}
+.gcard{position:relative;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:26px 22px;text-decoration:none;color:var(--fg);display:block;overflow:hidden;transition:all .3s var(--ease)}
+.gcard:hover{border-color:var(--border2);transform:translateY(-4px);box-shadow:var(--shadow2)}
+.gcard:active{transform:scale(.98)}
+.gcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#7C3AED,#EC4899)}
+.gc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.gc-icon{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#7C3AED,#EC4899);display:grid;place-items:center;color:#fff;font-family:var(--display);font-weight:800;font-size:16px;flex-shrink:0}
+.gc-ext{font-family:var(--mono);font-size:9px;color:var(--fg4);border:1px solid var(--border);border-radius:20px;padding:3px 8px;display:flex;align-items:center;gap:4px}
+.gc-title{font-family:var(--display);font-size:17px;font-weight:700;margin-bottom:6px;letter-spacing:-.02em}
+.gc-desc{font-size:12.5px;color:var(--fg3);line-height:1.6;margin-bottom:14px}
+.gc-cta{font-size:12px;font-weight:600;color:var(--fg);display:flex;align-items:center;gap:6px;transition:gap .2s}
+.gcard:hover .gc-cta{gap:10px}
 /* FAQ */
 .faq{margin-top:0;display:flex;flex-direction:column;gap:6px}
 .faq-item{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:border-color .25s}
@@ -258,6 +272,11 @@ a{color:inherit;text-decoration:none}
   <div class="mm-sec" data-t="m_sys">SYSTEM</div>
   <a class="mm-link" href="/admin"><span data-t="n_admin">Admin Dashboard</span></a>
   <a class="mm-link" href="/engineer"><span data-t="n_eng">Engineer Portal</span></a>
+  <a class="mm-link" href="/report"><span data-t="n_rep">Report System</span></a>
+  <div class="mm-sec" data-t="m_guide">คู่มือการใช้งาน</div>
+  <a class="mm-link" href="https://mud-and-hound.github.io/it_service/sop_report.html" target="_blank" rel="noopener">คู่มือ Report <span class="mm-tag">SOP</span></a>
+  <a class="mm-link" href="https://mud-and-hound.github.io/it_service/sop_admin.html" target="_blank" rel="noopener">คู่มือ Admin <span class="mm-tag">SOP</span></a>
+  <a class="mm-link" href="https://mud-and-hound.github.io/it_service/sop_engineer.html" target="_blank" rel="noopener">คู่มือ Engineer <span class="mm-tag">SOP</span></a>
 </nav>
 <section class="hero">
   <div class="hero-deco deco-1">LINE แจ้งเตือนอัตโนมัติ</div>
@@ -398,6 +417,31 @@ a{color:inherit;text-decoration:none}
     </a>
   </div>
 </section>
+<section class="sec reveal" id="guides">
+  <div class="sec-label" data-t="g_label">USER GUIDE</div>
+  <h2 class="sec-title" data-t="g_title">คู่มือการใช้งาน</h2>
+  <p class="sec-desc" data-t="g_desc">คู่มือแบบทีละขั้นตอนพร้อมภาพประกอบ สำหรับผู้ใช้งานแต่ละบทบาท</p>
+  <div class="guides">
+    <a href="https://mud-and-hound.github.io/it_service/sop_report.html" target="_blank" rel="noopener" class="gcard reveal-l delay-1">
+      <div class="gc-top"><div class="gc-icon">R</div><div class="gc-ext">&#8599; SOP</div></div>
+      <div class="gc-title" data-t="g_rep">คู่มือแจ้งซ่อม</div>
+      <div class="gc-desc" data-t="g_rep_d">วิธีกรอกฟอร์มแจ้งปัญหา แนบรูป และติดตามสถานะ Ticket</div>
+      <div class="gc-cta"><span data-t="g_cta">เปิดคู่มือ</span> &#8594;</div>
+    </a>
+    <a href="https://mud-and-hound.github.io/it_service/sop_admin.html" target="_blank" rel="noopener" class="gcard reveal-s delay-2">
+      <div class="gc-top"><div class="gc-icon">A</div><div class="gc-ext">&#8599; SOP</div></div>
+      <div class="gc-title" data-t="g_adm">คู่มือ Admin</div>
+      <div class="gc-desc" data-t="g_adm_d">จัดการ Ticket มอบหมายช่าง ผู้ใช้ GPS Map และสาขา</div>
+      <div class="gc-cta"><span data-t="g_cta">เปิดคู่มือ</span> &#8594;</div>
+    </a>
+    <a href="https://mud-and-hound.github.io/it_service/sop_engineer.html" target="_blank" rel="noopener" class="gcard reveal-r delay-3">
+      <div class="gc-top"><div class="gc-icon">E</div><div class="gc-ext">&#8599; SOP</div></div>
+      <div class="gc-title" data-t="g_eng">คู่มือช่างเทคนิค</div>
+      <div class="gc-desc" data-t="g_eng_d">รับงาน เริ่มงาน นำทาง แจ้งติดขัด และส่งงาน</div>
+      <div class="gc-cta"><span data-t="g_cta">เปิดคู่มือ</span> &#8594;</div>
+    </a>
+  </div>
+</section>
 <section class="sec reveal">
   <div class="sec-label">FAQ</div>
   <h2 class="sec-title" id="faq-title">คำถามที่พบบ่อย</h2>
@@ -425,8 +469,8 @@ const BRANDS=[
 ];
 let lang='en';
 const T={
-  th:{h_chip:'ระบบจัดการ  หลายแบรนด์',h_t1:'ทุกปัญหา ',h_t2:'จัดการได้ในที่เดียว',h_sub:'แจ้งซ่อม ติดตาม มอบหมาย ครบจบในแพลตฟอร์มเดียว รองรับ 7 แบรนด์ แจ้งเตือน LINE พร้อม GPS tracking',h_b1:'เลือกแบรนด์',h_b2:'เข้า Admin',br_label:'BRANDS',br_title:'เลือกแบรนด์ของคุณ',br_desc:'แต่ละแบรนด์มีหน้าแจ้งปัญหาและติดตามงานแยกจากกัน',br_rep:'แจ้งปัญหา',br_trk:'ติดตาม',pv_label:'SYSTEM PREVIEW',pv_title:'ภาพรวมระบบ',pv_desc:'3 ระบบทำงานร่วมกัน ครบวงจร',pv_admin:'Admin Dashboard',pv_admin_d:'จัดการ Ticket มอบหมายช่าง ตรวจงาน ติดตาม SLA',pv_total:'Tickets ทั้งหมด',pv_eng:'หน้าช่าง',pv_eng_d:'รับงาน GPS tracking ถ่ายรูป ส่งรายงาน',pv_active:'ช่างที่ Active',pv_rep:'ระบบแจ้งงาน',pv_rep_d:'แจ้งปัญหาแยกแบรนด์ สร้าง Ticket อัตโนมัติ ส่ง LINE',pv_brands:'แบรนด์ที่รองรับ',q_label:'QUICK ACCESS',q_title:'เข้าสู่ระบบ',q_rep:'แจ้งปัญหา',q_rep_d:'ส่ง Ticket แจ้งซ่อม',q_eng:'หน้าช่าง',q_eng_d:'รับงาน ส่งงาน',q_adm:'Admin',q_adm_d:'จัดการระบบและผู้ใช้',n_admin:'Admin Dashboard',n_eng:'หน้าช่าง',m_brands:'BRANDS',m_sys:'SYSTEM',footer:'ระบบจัดการ  Support หลายสาขา'},
-  en:{h_chip:'Multi-brand  Ticket Management',h_t1:'Every  issue,',h_t2:'managed in one place.',h_sub:'Report, track, assign, repair — all in one platform. 7 brands, real-time LINE notifications, GPS tracking, SLA management.',h_b1:'Select Brand',h_b2:'Admin Login',br_label:'BRANDS',br_title:'Choose your brand',br_desc:'Each brand has its own dedicated report and tracking page with unique identity.',br_rep:'Report',br_trk:'Track',pv_label:'SYSTEM PREVIEW',pv_title:'Platform overview',pv_desc:'Three connected systems working together end-to-end.',pv_admin:'Dashboard',pv_admin_d:'Manage tickets, assign engineers, review work, track SLA compliance.',pv_total:'Total tickets',pv_eng:'Engineer Portal',pv_eng_d:'Accept jobs, track GPS, upload photos, submit work reports.',pv_active:'Active engineers',pv_rep:'Report System',pv_rep_d:'Per-brand issue reporting with auto Ticket ID, SLA, LINE notification.',pv_brands:'Brands supported',q_label:'QUICK ACCESS',q_title:'System access',q_rep:'Report',q_rep_d:'Submit  repair tickets',q_eng:'Engineer',q_eng_d:'Accept and complete jobs',q_adm:'Admin',q_adm_d:'Manage system and users',n_admin:'Admin Dashboard',n_eng:'Engineer Portal',m_brands:'BRANDS',m_sys:'SYSTEM',footer:'Multi-brand Restaurant  Management'}
+  th:{h_chip:'ระบบจัดการ  หลายแบรนด์',h_t1:'ทุกปัญหา ',h_t2:'จัดการได้ในที่เดียว',h_sub:'แจ้งซ่อม ติดตาม มอบหมาย ครบจบในแพลตฟอร์มเดียว รองรับ 7 แบรนด์ แจ้งเตือน LINE พร้อม GPS tracking',h_b1:'เลือกแบรนด์',h_b2:'เข้า Admin',br_label:'BRANDS',br_title:'เลือกแบรนด์ของคุณ',br_desc:'แต่ละแบรนด์มีหน้าแจ้งปัญหาและติดตามงานแยกจากกัน',br_rep:'แจ้งปัญหา',br_trk:'ติดตาม',pv_label:'SYSTEM PREVIEW',pv_title:'ภาพรวมระบบ',pv_desc:'3 ระบบทำงานร่วมกัน ครบวงจร',pv_admin:'Admin Dashboard',pv_admin_d:'จัดการ Ticket มอบหมายช่าง ตรวจงาน ติดตาม SLA',pv_total:'Tickets ทั้งหมด',pv_eng:'หน้าช่าง',pv_eng_d:'รับงาน GPS tracking ถ่ายรูป ส่งรายงาน',pv_active:'ช่างที่ Active',pv_rep:'ระบบแจ้งงาน',pv_rep_d:'แจ้งปัญหาแยกแบรนด์ สร้าง Ticket อัตโนมัติ ส่ง LINE',pv_brands:'แบรนด์ที่รองรับ',q_label:'QUICK ACCESS',q_title:'เข้าสู่ระบบ',q_rep:'แจ้งปัญหา',q_rep_d:'ส่ง Ticket แจ้งซ่อม',q_eng:'หน้าช่าง',q_eng_d:'รับงาน ส่งงาน',q_adm:'Admin',q_adm_d:'จัดการระบบและผู้ใช้',n_admin:'Admin Dashboard',n_eng:'หน้าช่าง',n_rep:'ระบบแจ้งงาน',m_brands:'BRANDS',m_sys:'SYSTEM',m_guide:'คู่มือการใช้งาน',g_label:'USER GUIDE',g_title:'คู่มือการใช้งาน',g_desc:'คู่มือแบบทีละขั้นตอนพร้อมภาพประกอบ สำหรับผู้ใช้งานแต่ละบทบาท',g_rep:'คู่มือแจ้งซ่อม',g_rep_d:'วิธีกรอกฟอร์มแจ้งปัญหา แนบรูป และติดตามสถานะ Ticket',g_adm:'คู่มือ Admin',g_adm_d:'จัดการ Ticket มอบหมายช่าง ผู้ใช้ GPS Map และสาขา',g_eng:'คู่มือช่างเทคนิค',g_eng_d:'รับงาน เริ่มงาน นำทาง แจ้งติดขัด และส่งงาน',g_cta:'เปิดคู่มือ',footer:'ระบบจัดการ  Support หลายสาขา'},
+  en:{h_chip:'Multi-brand  Ticket Management',h_t1:'Every  issue,',h_t2:'managed in one place.',h_sub:'Report, track, assign, repair — all in one platform. 7 brands, real-time LINE notifications, GPS tracking, SLA management.',h_b1:'Select Brand',h_b2:'Admin Login',br_label:'BRANDS',br_title:'Choose your brand',br_desc:'Each brand has its own dedicated report and tracking page with unique identity.',br_rep:'Report',br_trk:'Track',pv_label:'SYSTEM PREVIEW',pv_title:'Platform overview',pv_desc:'Three connected systems working together end-to-end.',pv_admin:'Dashboard',pv_admin_d:'Manage tickets, assign engineers, review work, track SLA compliance.',pv_total:'Total tickets',pv_eng:'Engineer Portal',pv_eng_d:'Accept jobs, track GPS, upload photos, submit work reports.',pv_active:'Active engineers',pv_rep:'Report System',pv_rep_d:'Per-brand issue reporting with auto Ticket ID, SLA, LINE notification.',pv_brands:'Brands supported',q_label:'QUICK ACCESS',q_title:'System access',q_rep:'Report',q_rep_d:'Submit  repair tickets',q_eng:'Engineer',q_eng_d:'Accept and complete jobs',q_adm:'Admin',q_adm_d:'Manage system and users',n_admin:'Admin Dashboard',n_eng:'Engineer Portal',n_rep:'Report System',m_brands:'BRANDS',m_sys:'SYSTEM',m_guide:'USER GUIDES',g_label:'USER GUIDE',g_title:'User Guides',g_desc:'Step-by-step guides with screenshots for each role.',g_rep:'Report Guide',g_rep_d:'How to submit issues, attach photos, and track ticket status.',g_adm:'Admin Guide',g_adm_d:'Manage tickets, assign engineers, users, GPS map and branches.',g_eng:'Engineer Guide',g_eng_d:'Accept jobs, start work, navigate, report blockers, and submit.',g_cta:'Open guide',footer:'Multi-brand Restaurant  Management'}
 };
 const FAQS={
   th:[
