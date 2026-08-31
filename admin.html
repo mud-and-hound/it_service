@@ -799,6 +799,8 @@ svg.ic-spin{animation:icspin 1.1s linear infinite;transform-origin:center}
 <symbol id="i-phone" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></symbol>
 <symbol id="i-dot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="currentColor"/></symbol>
 <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></symbol>
+<symbol id="i-package" viewBox="0 0 24 24"><path d="M16.5 9.4 7.5 4.21M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></symbol>
 <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
 <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
 <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></symbol>
@@ -1026,7 +1028,6 @@ svg.ic-spin{animation:icspin 1.1s linear infinite;transform-origin:center}
  </button>
  </div>
 
- <a href="https://it-service-56im.onrender.com/Itsupportlanding#guides" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:7px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--fg2);font-family:var(--sans);font-size:11px;font-weight:600;text-align:center;text-decoration:none;margin-bottom:6px;transition:all .2s" onmouseover="this.style.borderColor='var(--fg)'" onmouseout="this.style.borderColor='var(--border)'"><svg class=ic-md><use href=#i-book /></svg> คู่มือการใช้งาน</a>
  <a href="/">Home</a>
  <div style="display:flex;gap:3px">
  <button onclick="togTheme()" style="flex:1" id="theme-btn">Dark</button>
@@ -1428,6 +1429,7 @@ const TR_TH_EN = {
   'จาก':'From','ถึง':'to','วัน':'days',
   // Status / workflow
   'รอดำเนินการ':'Pending','อยู่ระหว่างดำเนินการ':'In Progress','ตรวจงาน':'Review',
+  'รออะไหล่':'Waiting Parts','รอซัพดำเนินการซ่อม':'Waiting Vendor','ติดขัดอื่นๆ':'Blocked (Other)',
   'เสร็จสิ้น':'Done','เสร็จ':'Done',
   'ใช้งาน':'Active','ปิดใช้งาน':'Inactive','ถูกลบ':'Deleted',
   // Dashboard / sections
@@ -1781,16 +1783,17 @@ if (document.readyState === 'loading') {
 const STATUS_LABELS = {
   'รอดำเนินการ':         { th:'รอดำเนินการ',          en:'Pending' },
   'อยู่ระหว่างดำเนินการ': { th:'อยู่ระหว่างดำเนินการ', en:'In Progress' },
-  'รออะไหล่':             { th:'รออะไหล่',             en:'Waiting Parts' },
-  'รอซัพดำเนินการซ่อม':    { th:'รอซัพดำเนินการซ่อม',    en:'Waiting Vendor' },
-  'รอซัพ':                { th:'รอซัพดำเนินการซ่อม',    en:'Waiting Vendor' },
+  'รออะไหล่':             { th:'รออะไหล่',            en:'Waiting Parts' },
+  'รอซัพดำเนินการซ่อม':  { th:'รอซัพดำเนินการซ่อม', en:'Waiting Vendor' },
+  'ติดขัดอื่นๆ':          { th:'ติดขัดอื่นๆ',         en:'Blocked (Other)' },
+  'waiting_parts':        { th:'รออะไหล่',            en:'Waiting Parts' },
+  'waiting_vendor':       { th:'รอซัพดำเนินการซ่อม', en:'Waiting Vendor' },
+  'stuck_other':          { th:'ติดขัดอื่นๆ',         en:'Blocked (Other)' },
   'ตรวจงาน':              { th:'ตรวจงาน',             en:'Under Review' },
   'เสร็จสิ้น':             { th:'เสร็จสิ้น',            en:'Done' },
   'ยกเลิก':                { th:'ยกเลิก',               en:'Cancelled' },
   'pending':              { th:'รอดำเนินการ',          en:'Pending' },
   'in_progress':          { th:'อยู่ระหว่างดำเนินการ', en:'In Progress' },
-  'waiting_parts':        { th:'รออะไหล่',             en:'Waiting Parts' },
-  'waiting_vendor':       { th:'รอซัพดำเนินการซ่อม',    en:'Waiting Vendor' },
   'review':               { th:'ตรวจงาน',             en:'Under Review' },
   'done':                  { th:'เสร็จสิ้น',            en:'Done' },
   'cancelled':            { th:'ยกเลิก',               en:'Cancelled' },
@@ -1881,41 +1884,84 @@ function ensureLeaflet(){
  return _leafletPromise;
 }
 function statusLabel(s){return(s||'--').replace(/<svg[^>]*>.*?<\/svg>/g,'').replace(/\s+/g,' ').trim();}
+
+// ตัด SVG/emoji ออกจากสถานะ เพื่อเทียบค่าข้ามรูปแบบ ('รออะไหล่ 📦' === 'รออะไหล่ <svg…>')
+function _stPlain(s){
+  return String(s||'')
+    .replace(/<svg[^>]*>[\s\S]*?<\/svg>/g,'')
+    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2300}-\u{23FF}\u{FE0F}]/gu,'')
+    .replace(/\s+/g,' ').trim();
+}
+
+// กล่อง "เหตุผลติดขัด" ที่ช่างแจ้ง (รออะไหล่ / รอซัพ / อื่นๆ ระบุเอง)
+function adminStuckBlock(t){
+  const st=String(t.status||'');
+  const isParts =/รออะไหล่|waiting_parts/.test(st);
+  const isVendor=/รอซัพ|waiting_vendor/.test(st);
+  const isOther =/ติดขัดอื่นๆ|stuck_other/.test(st);
+  if(!isParts&&!isVendor&&!isOther)return '';
+  const note=String(t.stuckNote||t.stuck_note||'').trim();
+  const m=isOther ?{c:'#f59e0b',i:'i-pause',  l:'ติดขัดอื่นๆ'}
+        :isVendor?{c:'#ec4899',i:'i-wrench', l:'รอซัพดำเนินการซ่อม'}
+        :         {c:'#a855f7',i:'i-package',l:'รออะไหล่'};
+  return `<div class="dsec">งานติดขัด</div>
+    <div class="dbox" style="border-left:2px solid ${m.c}">
+      <div style="display:flex;align-items:center;gap:6px;font-weight:700;font-size:12px;color:${m.c};margin-bottom:${note?'4px':'0'}">
+        <svg class=ic-md><use href=#${m.i} /></svg> ${m.l}
+      </div>
+      ${note?`<div style="font-size:13px;color:var(--fg)">${esc(note)}</div>`:'<div style="font-size:12px;color:var(--fg4)">ช่างไม่ได้ระบุรายละเอียดเพิ่มเติม</div>'}
+    </div>`;
+}
 function cleanBranch(code){return(code||'—').replace(/\s*มี\s*\d+\s*เครื่อง.*/i,'').trim()||'—';}
 
 // ═══════════════════════════════════════════════════════════
-// BRANCH MAP — ตัวเชื่อมข้อมูลสาขา (code → ข้อมูลเต็ม)
-// ใช้ร่วมกันทั้งหน้า: ticket table, drawer, เบอร์โทร
-// build จาก loadBranches() ทุกครั้งที่โหลดสาขา
+// BRANCH LABEL — แสดง "0001 - ชื่อสาขา" ทุกที่ที่มีรหัสสาขา
+// รหัสซ้ำข้ามแบรนด์ได้ (0001 มีทั้ง Au Bon Pain และ Greyhound Cafe')
+// จึง index ด้วย brand+code ก่อน แล้ว fallback เป็น code
 // ═══════════════════════════════════════════════════════════
-let branchMap = {};
-function buildBranchMap(){
-  branchMap = {};
-  (branches||[]).forEach(b=>{
-    const code = String(b.code||'').trim();
-    if(code) branchMap[code] = b;
+let BRANCH_IDX={byKey:{},byCode:{}};
+function _brCleanCode(c){return String(c==null?'':c).replace(/\s*มี\s*\d+\s*เครื่อง.*/i,'').trim();}
+function buildBranchIndex(list){
+  BRANCH_IDX={byKey:{},byCode:{}};
+  (list||[]).forEach(b=>{
+    const code=_brCleanCode(b.code); if(!code)return;
+    const name=String(b.nameTh||b.name_th||b.nameEn||b.name_en||'').trim();
+    const rec={code,_name:name,brand:b.brand||'',raw:b};
+    BRANCH_IDX.byKey[normBrand(b.brand)+'|'+code]=rec;
+    if(!BRANCH_IDX.byCode[code])BRANCH_IDX.byCode[code]=rec;
   });
 }
-// แสดงชื่อสาขาแบบเชื่อมกันทุกที่: "0001 - EM-Emporium"
-// fallback: ไม่มี short_code → name_en → name_th → code เปล่า
-function formatBranch(code){
-  const c = String(code||'').trim();
-  if(!c) return '—';
-  const b = branchMap[c];
-  if(!b) return cleanBranch(code); // ยังไม่โหลด/ไม่เจอ → แสดง code เดิม (ไม่พัง)
-  const label = (b.shortCode||b.short_code||b.nameEn||b.name_en||b.nameTh||b.name_th||'').trim();
-  return label ? `${c} - ${label}` : c;
+function branchInfo(code,brand){
+  const c=_brCleanCode(code); if(!c)return null;
+  return BRANCH_IDX.byKey[normBrand(brand)+'|'+c]||BRANCH_IDX.byCode[c]||null;
 }
-// HTML เบอร์สาขา (ร้าน + หัวหน้า) กดโทรได้ — ใช้ใน ticket drawer
-function branchPhonesHtml(code){
-  const b = branchMap[String(code||'').trim()];
-  if(!b) return '';
-  const store = (b.storePhone||b.store_phone||'').trim();
-  const mgr   = (b.managerPhone||b.manager_phone||'').trim();
-  const rows = [];
-  if(store) rows.push(`<div class="drow"><span class="dlbl"><svg class=ic-md><use href=#i-phone /></svg> เบอร์ร้าน</span><span class="dval"><a href="tel:${esc(store)}" style="color:var(--blue);font-weight:600;text-decoration:none">${esc(store)}</a></span></div>`);
-  if(mgr)   rows.push(`<div class="drow"><span class="dlbl"><svg class=ic-md><use href=#i-user /></svg> เบอร์หัวหน้า</span><span class="dval"><a href="tel:${esc(mgr)}" style="color:var(--blue);font-weight:600;text-decoration:none">${esc(mgr)}</a></span></div>`);
-  return rows.join('');
+function branchName(code,brand){const b=branchInfo(code,brand);return b?(b._name||''):'';}
+// "0001 - ABP สินธรทาวเวอร์" — ถ้ายังไม่มีข้อมูลสาขา คืนรหัสเดิม (UI ไม่พัง)
+function branchLabel(code,brand){
+  const c=_brCleanCode(code); if(!c)return '—';
+  const n=branchName(c,brand);
+  return n?`${c} - ${n}`:c;
+}
+// โหลดสาขาไว้เบื้องหลังตั้งแต่เปิดระบบ เพื่อให้ตาราง Ticket มีชื่อสาขาทันที
+async function preloadBranchIndex(){
+  try{
+    const d=await api('/api/branches');
+    if(d.ok&&d.branches){
+      const list=[];
+      Object.entries(d.branches).forEach(([brand,arr])=>{
+        (arr||[]).forEach(b=>list.push({
+          id:b.id,code:b.code||'',brand,
+          nameTh:b.nameTh||b.name_th||'',nameEn:b.nameEn||b.name_en||'',
+          ip:b.ip||'',phone:b.phone||'',
+          location_lat:b.location_lat??null,location_lng:b.location_lng??null,
+          location_name:b.location_name||'',status:b.status||'active'
+        }));
+      });
+      window._allBranches=list;
+      buildBranchIndex(list);
+      if(typeof render==='function' && pg==='tickets') render();
+    }
+  }catch(e){console.warn('[preloadBranchIndex]',e.message);}
 }
 
 // ═══ PASSWORD TOGGLE ═══
@@ -1975,7 +2021,7 @@ async function boot(){
  ensureLeaflet().catch(e=>console.warn('[leaflet preload]',e.message));
 
  await Promise.all([
- Promise.allSettled([loadTickets(),loadLogs(),loadUsers(),loadReporters()]), /* branches loaded lazily on tab open */
+ Promise.allSettled([loadTickets(),loadLogs(),loadUsers(),loadReporters(),preloadBranchIndex()]), /* branch index preloaded for "รหัส - ชื่อสาขา" */
  new Promise(res=>{
  const checkDone=setInterval(()=>{
  const st=document.getElementById('load-status');
@@ -2018,7 +2064,7 @@ async function loadTickets(){try{const d=await api('/api/tickets');if(d.ok)ticke
 async function loadLogs(){try{const d=await api('/api/logs?limit=200');if(d.ok)logs=d.logs||[];}catch(e){}}
 async function loadUsers(){try{const d=await api('/api/users');if(d.ok)users=d.users||[];}catch(e){}}
 async function loadReporters(){try{const d=await api('/api/admin/reporters');if(d.ok)reporters=d.reporters||[];}catch(e){}}
-function updateBdg(){const n=tickets.filter(t=>/รอ|pending|waiting/.test(t.status||'')).length;const b=document.getElementById('nav-bdg');if(b){b.textContent=n;b.style.display=n?'':'none';}}
+function updateBdg(){const n=tickets.filter(t=>/รอ|pending/.test(t.status||'')).length;const b=document.getElementById('nav-bdg');if(b){b.textContent=n;b.style.display=n?'':'none';}}
 async function doRefresh(){const b=document.getElementById('btn-rf');b.textContent='...';document.getElementById('dot').className='status-dot loading';await Promise.allSettled([loadTickets(),loadLogs(),loadUsers(),loadReporters()]);b.textContent='Refresh';document.getElementById('dot').className='status-dot online';render();toast('Refreshed');}
 
 function connectSSE(){
@@ -2135,13 +2181,10 @@ function rDash(){
 
  // KPI stats (all tickets)
  const total =tickets.length;
- // ⚠️ waiting เอาเฉพาะ "รอดำเนินการ"/pending — ไม่รวมรออะไหล่/รอซัพ (กัน regex /รอ/ จับผิด)
- const waiting=tickets.filter(x=>/รอดำเนินการ|pending/.test(x.status||'')).length;
- const waitParts =tickets.filter(x=>/รออะไหล่|waiting_parts/.test(x.status||'')).length;
- const waitVendor=tickets.filter(x=>/รอซัพ|waiting_vendor/.test(x.status||'')).length;
+ const waiting=tickets.filter(x=>/รอ|pending/.test(x.status||'')).length;
  const inprog =tickets.filter(x=>/ระหว่าง|progress/.test(x.status||'')).length;
  const review =tickets.filter(x=>/ตรวจ|review/.test(x.status||'')).length;
- const done =tickets.filter(x=>/เสร็จ|completed|done/.test(x.status||'')).length;
+ const done =tickets.filter(x=>/เสร็จ|completed/.test(x.status||'')).length;
  const cancel =tickets.filter(x=>/ยกเลิก|cancel/.test(x.status||'')).length;
 
  // Recent
@@ -2216,10 +2259,8 @@ function rDash(){
  // KPI
  const kpiItems=[
  {l:'ทั้งหมด', v:total, c:'var(--fg)', filter:'all'},
- {l:'รอดำเนินการ',v:waiting,c:'#6366f1',filter:'รอดำเนินการ'},
+ {l:'รอดำเนินการ',v:waiting,c:'#6366f1',filter:'รอ'},
  {l:'กำลังทำ', v:inprog, c:'#f59e0b', filter:'ระหว่าง'},
- {l:'รออะไหล่', v:waitParts, c:'#a855f7', filter:'รออะไหล่'},
- {l:'รอซัพซ่อม', v:waitVendor,c:'#ec4899', filter:'รอซัพ'},
  {l:'ตรวจงาน', v:review, c:'#0ea5e9', filter:'ตรวจ'},
  {l:'เสร็จสิ้น',v:done, c:'#22c55e', filter:'เสร็จ'},
  {l:'ยกเลิก', v:cancel, c:'#ef4444', filter:'ยกเลิก'},
@@ -2423,6 +2464,7 @@ function rTickets(){
  <option value="อยู่ระหว่างดำเนินการ">อยู่ระหว่างดำเนินการ</option>
  <option value="รออะไหล่">รออะไหล่</option>
  <option value="รอซัพ">รอซัพดำเนินการซ่อม</option>
+ <option value="ติดขัดอื่นๆ">ติดขัดอื่นๆ</option>
  <option value="ตรวจงาน">ตรวจงาน</option>
  <option value="เสร็จสิ้น">เสร็จสิ้น</option>
  <option value="ยกเลิก">ยกเลิก</option>
@@ -2468,7 +2510,7 @@ function _rTicketsTable(){
  if(tF.status)data=data.filter(x=>(x.status||'').includes(tF.status));
  if(tF.brand)data=data.filter(x=>x.brand===tF.brand);
  if(tF.engineer)data=data.filter(x=>x.engineerName===tF.engineer);
- if(tF.q){const q=tF.q.toLowerCase();data=data.filter(x=>`${x.id} ${x.reporter} ${x.phone} ${x.type} ${x.detail} ${x.branchCode} ${x.engineerName}`.toLowerCase().includes(q));}
+ if(tF.q){const q=tF.q.toLowerCase();data=data.filter(x=>`${x.id} ${x.reporter} ${x.phone} ${x.type} ${x.detail} ${x.branchCode} ${branchName(x.branchCode,x.brand)} ${x.engineerName}`.toLowerCase().includes(q));}
  if(tF.dateFrom||tF.dateTo){data=data.filter(x=>{const raw=x.sentDate||x.createdAt||x.sent_date||'';if(!raw)return true;const d=new Date(raw.replace(/\/([0-9]{4})/g,(m,y)=>parseInt(y)>2400?'/'+(y-543):m));if(isNaN(d))return true;if(tF.dateFrom&&d<new Date(tF.dateFrom+'T00:00:00'))return false;if(tF.dateTo&&d>new Date(tF.dateTo+'T23:59:59'))return false;return true;});}
  if(tF.sortCol){
  data.sort((a,b)=>{
@@ -2506,7 +2548,7 @@ function _rTicketsTable(){
  <td><span style="font-family:var(--mono);font-size:10px;color:var(--fg4)">${esc(x.id||'--')}</span><div style="font-size:11px;color:var(--fg4);margin-top:1px">${esc(x.reporter||'')}</div></td>
  <td><div style="font-weight:600">${esc(x.type||'-')}</div></td>
  <td style="font-size:12px">${esc(x.brand||'-')}</td>
- <td style="font-size:12px">${esc(formatBranch(x.branchCode))}</td>
+ <td style="font-size:12px;color:var(--fg2);max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(branchLabel(x.branchCode,x.brand))}">${esc(branchLabel(x.branchCode,x.brand))}</td>
  <td style="font-size:12px;color:var(--blue)">${esc(x.engineerName||'-')}</td>
  <td><span class="pill">${statusLabel(x.status)}</span></td>
  <td style="font-size:12px;color:var(--fg3)">${esc(x.sentDate||'-')}</td>
@@ -3851,7 +3893,7 @@ function openDrw(rid){
  if(!t){toast('ไม่พบ Ticket: '+rid);return;}
  const realRid=t._recordId||t.id||t.ticket_id||rid;
  document.getElementById('drw-bg').classList.add('on');document.getElementById('drw').classList.add('on');
- const ST=['รอดำเนินการ <svg class=ic-md><use href=#i-clock /></svg>','อยู่ระหว่างดำเนินการ <svg class=ic-md><use href=#i-settings /></svg>','รออะไหล่ 📦','รอซัพดำเนินการซ่อม 🔧','ตรวจงาน','เสร็จสิ้น <svg class=ic-md><use href=#i-check /></svg>','ยกเลิก <svg class=ic-md><use href=#i-x /></svg>','แก้ไข <svg class=ic-md><use href=#i-edit /></svg>'];
+ const ST=['รอดำเนินการ <svg class=ic-md><use href=#i-clock /></svg>','อยู่ระหว่างดำเนินการ <svg class=ic-md><use href=#i-settings /></svg>','รออะไหล่ <svg class=ic-md><use href=#i-package /></svg>','รอซัพดำเนินการซ่อม <svg class=ic-md><use href=#i-wrench /></svg>','ติดขัดอื่นๆ <svg class=ic-md><use href=#i-pause /></svg>','ตรวจงาน','เสร็จสิ้น <svg class=ic-md><use href=#i-check /></svg>','ยกเลิก <svg class=ic-md><use href=#i-x /></svg>','แก้ไข <svg class=ic-md><use href=#i-edit /></svg>'];
  document.getElementById('drw').innerHTML=`<div class="drw-head"><div style="flex:1"><div style="font-family:var(--mono);font-size:11px;color:var(--fg4)">${esc(t.id||t._recordId)}</div><div style="font-family:var(--display);font-size:15px;font-weight:800;margin-top:2px;color:var(--fg);letter-spacing:-.02em">${esc(t.type||'--')}</div><div style="margin-top:4px"><span class="pill">${statusLabel(t.status)}</span></div></div><button class="smb" onclick="closeDrw()">Close</button></div>
  <div class="drw-body">
  <div class="dsec">Actions</div>
@@ -3862,11 +3904,11 @@ function openDrw(rid){
  ${['superadmin','admin'].includes(AUTH?.user?.role)?`<button class="smb" style="color:#dc2626;border-color:#fca5a5" onclick="confirmDelTicket('${esc(realRid)}','${esc(t.id||t._recordId||'')}','${esc(t.type||'')}')"><svg class=ic-md><use href=#i-trash /></svg> Delete</button>`:''}
  </div>
  <div class="dsec">Status</div>
- <select class="sel" style="width:100%;margin-bottom:10px" onchange="qStatus('${esc(realRid)}',this.value)">${ST.map(s=>`<option${(t.status||'').includes(s)?' selected':''}>${s}</option>`).join('')}</select>
+ <select class="sel" style="width:100%;margin-bottom:10px" onchange="qStatus('${esc(realRid)}',this.value)">${ST.map(s=>`<option${_stPlain(t.status)===_stPlain(s)?' selected':''}>${s}</option>`).join('')}</select>
  <div class="dsec">Reporter</div>
- ${[['Name',t.reporter],['Phone',t.phone],['Date',t.sentDate],['Brand',t.brand],['Branch',formatBranch(t.branchCode)],['Location',t.location]].map(([l,v])=>`<div class="drow"><span class="dlbl">${l}</span><span class="dval">${esc(v||'-')}</span></div>`).join('')}
- ${branchPhonesHtml(t.branchCode)}
+ ${[['Name',t.reporter],['Phone',t.phone],['Date',t.sentDate],['Brand',t.brand],['Branch',branchLabel(t.branchCode,t.brand)],['Location',t.location]].map(([l,v])=>`<div class="drow"><span class="dlbl">${l}</span><span class="dval">${esc(v||'-')}</span></div>`).join('')}
  <div class="dsec">Detail</div><div class="dbox">${esc(t.detail||'-')}</div>
+ ${adminStuckBlock(t)}
  ${t.workDetail?`<div class="dsec">Engineer Report</div><div class="dbox" style="border-left:2px solid var(--fg)"><div style="font-size:11px;font-weight:700;margin-bottom:2px">${esc(t.engineerName||'-')}</div>${esc(t.workDetail)}${t.partsUsed?`<div style="font-size:12px;color:var(--fg3);margin-top:2px">Parts: ${esc(t.partsUsed)}</div>`:''}${t.workHours?`<div style="font-size:12px;color:var(--fg3)">Hours: ${esc(t.workHours)}</div>`:''}</div>`:''}
  ${(()=>{
  // รูปผู้แจ้ง
@@ -3896,7 +3938,6 @@ function openDrw(rid){
  </div>
  </div>`;
  })()}
- ${t.stuckNote?`<div class="dsec" style="color:#a855f7">📦 เหตุผลติดขัด</div><div class="dbox" style="border-left:2px solid #a855f7;background:rgba(168,85,247,.06)">${esc(t.stuckNote)}</div>`:''}
  ${t.adminNote?`<div class="dsec">Admin Note</div><div class="dbox">${esc(t.adminNote)}</div>`:''}
  </div>`;
 }
@@ -4376,14 +4417,11 @@ function renderNotifList(){
  const list=document.getElementById('notif-list');
  if(!list)return;
  if(!notifications.length){list.innerHTML='<div class="notif-empty">ไม่มีการแจ้งเตือนใหม่</div>';return;}
- // ตัด SVG tag ดิบออกจากข้อความ (กัน <svg><use.../></svg> โผล่เป็น text)
- const stripSvg=s=>String(s||'').replace(/<svg[^>]*>[\s\S]*?<\/svg>/g,'').replace(/\s+/g,' ').trim();
- const dotColor={success:'#22c55e',error:'#ef4444',warn:'#f59e0b',info:'#4facfe'};
  list.innerHTML=notifications.map(n=>`
  <div class="notif-item${n.read?'':' unread'}" onclick="markRead(${n.id})">
- <div class="notif-dot${n.read?' read':''}" style="background:${n.read?'':dotColor[n.type]||dotColor.info}"></div>
+ <div class="notif-dot${n.read?' read':''}"></div>
  <div class="notif-body">
- <div class="notif-msg">${esc(stripSvg(n.msg))}</div>
+ <div class="notif-msg">${esc(n.msg)}</div>
  <div class="notif-time">${n.time.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})}</div>
  </div>
  </div>`).join('');
@@ -4513,20 +4551,18 @@ async function loadBranches(){
  Object.entries(d.branches).forEach(([brand,list])=>{
  (list||[]).forEach(b=>branches.push({
  id:b.id, code:b.code||'',
- shortCode:b.shortCode||b.short_code||'',
  name_en:b.nameEn||b.name_en||'',
  nameTh:b.nameTh||b.name_th||'',
  brand, ip:b.ip||'', phone:b.phone||'',
- storePhone:b.storePhone||b.store_phone||'',
- managerPhone:b.managerPhone||b.manager_phone||'',
  location_lat:b.location_lat||null,
  location_lng:b.location_lng||null,
  location_name:b.location_name||'',
  status:b.status||'active'
  }));
  });
- buildBranchMap();  // ← สร้างตัวเชื่อมข้อมูล code→สาขา (ให้ formatBranch ทำงาน)
  brLoaded=true;
+ window._allBranches=branches;
+ buildBranchIndex(branches);
  addNotif(`โหลดสาขาครบ ${branches.length} สาขาแล้ว`,'info');
  } else {
  const pg2=document.getElementById('pg-branches');
@@ -4573,20 +4609,14 @@ function _renderBranchTable(){
  <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--fg4);text-transform:uppercase;letter-spacing:.06em;cursor:pointer;user-select:none;white-space:nowrap;background:var(--bg3)" onclick="brSort('code')">Code ${brSI('code')}</th>
  <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--fg4);text-transform:uppercase;letter-spacing:.06em;cursor:pointer;user-select:none;white-space:nowrap;background:var(--bg3)" onclick="brSort('brand')">Brand ${brSI('brand')}</th>
  <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--fg4);text-transform:uppercase;letter-spacing:.06em;cursor:pointer;user-select:none;white-space:nowrap;background:var(--bg3)" onclick="brSort('nameTh')">ชื่อสาขา ${brSI('nameTh')}</th>
- <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--fg4);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;background:var(--bg3)"><svg class=ic-md><use href=#i-phone /></svg> เบอร์ติดต่อ</th>
  <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--fg4);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;background:var(--bg3)">Location</th>
  <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--fg4);text-transform:uppercase;letter-spacing:.06em;cursor:pointer;user-select:none;white-space:nowrap;background:var(--bg3)" onclick="brSort('status')">Status ${brSI('status')}</th>
  <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--fg4);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;background:var(--bg3)">Action</th>
  </tr></thead>
  <tbody>${paged.map(b=>`<tr onclick="openBranchModal('${b.id}')" style="cursor:pointer">
- <td style="font-family:var(--mono);font-size:11px">${esc(b.code||'')}${(b.shortCode||b.short_code)?`<div style="font-size:10px;color:var(--blue);font-weight:700;margin-top:1px">${esc(b.shortCode||b.short_code)}</div>`:''}</td>
+ <td style="font-family:var(--mono);font-size:11px">${esc(b.code||'')}</td>
  <td style="font-size:12px">${esc(b.brand||'')}</td>
  <td><div style="font-weight:500">${esc(b.nameTh||b.name_th||b.nameEn||b.name_en||'')}</div><div style="font-size:10px;color:var(--fg4)">${esc(b.nameEn||b.name_en||'')}</div></td>
- <td style="font-size:11px" onclick="event.stopPropagation()">
- ${(b.storePhone||b.store_phone)?`<div><a href="tel:${esc(b.storePhone||b.store_phone)}" style="color:var(--blue);text-decoration:none;font-weight:600"><svg class=ic-md><use href=#i-phone /></svg> ${esc(b.storePhone||b.store_phone)}</a></div>`:''}
- ${(b.managerPhone||b.manager_phone)?`<div style="margin-top:2px"><a href="tel:${esc(b.managerPhone||b.manager_phone)}" style="color:var(--fg3);text-decoration:none"><svg class=ic-md><use href=#i-user /></svg> ${esc(b.managerPhone||b.manager_phone)}</a></div>`:''}
- ${!(b.storePhone||b.store_phone)&&!(b.managerPhone||b.manager_phone)?'<span style="color:var(--fg4)">—</span>':''}
- </td>
  <td style="font-size:11px">${b.location_lat?`<span style="color:var(--green)"><svg class=ic-md><use href=#i-pin /></svg> ${parseFloat(b.location_lat).toFixed(4)}, ${parseFloat(b.location_lng||0).toFixed(4)}</span><div style="font-size:10px;color:var(--fg4)">${esc(b.location_name||'')}</div>`:'<span style="color:var(--fg4)">ไม่มีพิกัด</span>'}</td>
  <td><span class="br-badge ${b.status==='active'?'active':b.status==='pending'?'pending':'inactive'}">${b.status||'active'}</span></td>
  <td onclick="event.stopPropagation()">
@@ -4595,7 +4625,7 @@ function _renderBranchTable(){
  ${isSup?`<button class="smb" style="font-size:10px;padding:3px 8px;color:#dc2626;border-color:#fca5a5" onclick="confirmDelBranch(${b.id},${escJs(b.code||'')},${escJs(b.brand||'')},${escJs(b.nameTh||b.nameEn||b.name_en||'')})"><svg class=ic-md><use href=#i-trash /></svg> ลบ</button>`:''}
  </td>
  </tr>`).join('')}
- ${!paged.length?'<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--fg4)">ไม่พบสาขา</td></tr>':''}
+ ${!paged.length?'<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--fg4)">ไม่พบสาขา</td></tr>':''}
  </tbody>
  </table>
  </div>
@@ -4830,17 +4860,10 @@ function openAddBranch(){
        ${BR_BRANDS.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('')}
      </select>
    </div>
-   <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px">
-     <div class="fg">
-       <label>รหัสสาขา (Code) <span style="color:#dc2626">*</span></label>
-       <input class="inp" id="ab-code" placeholder="เช่น 0001, 0123" style="width:100%" maxlength="20"/>
-       <div style="font-size:10px;color:var(--fg4);margin-top:3px">ห้ามซ้ำกับ Code ที่มีอยู่ในแบรนด์เดียวกัน</div>
-     </div>
-     <div class="fg">
-       <label>ชื่อย่อ</label>
-       <input class="inp" id="ab-short-code" placeholder="เช่น EM" style="width:100%" maxlength="30"/>
-       <div style="font-size:10px;color:var(--fg4);margin-top:3px">แสดงเป็น "0001 - EM"</div>
-     </div>
+   <div class="fg">
+     <label>รหัสสาขา (Code) <span style="color:#dc2626">*</span></label>
+     <input class="inp" id="ab-code" placeholder="เช่น 0001, 0123" style="width:100%" maxlength="20"/>
+     <div style="font-size:10px;color:var(--fg4);margin-top:3px">ห้ามซ้ำกับ Code ที่มีอยู่ในแบรนด์เดียวกัน</div>
    </div>
    <div class="fg">
      <label>ชื่อสาขา (ไทย)</label>
@@ -4856,13 +4879,9 @@ function openAddBranch(){
        <input class="inp" id="ab-ip" placeholder="192.168.1.1" maxlength="50"/>
      </div>
      <div class="fg" style="margin-bottom:0">
-       <label><svg class=ic-md><use href=#i-phone /></svg> เบอร์ร้าน</label>
-       <input class="inp" id="ab-store-phone" type="tel" placeholder="02-xxx-xxxx" maxlength="50"/>
+       <label>เบอร์โทร</label>
+       <input class="inp" id="ab-phone" placeholder="02-xxx-xxxx" maxlength="50"/>
      </div>
-   </div>
-   <div class="fg">
-     <label><svg class=ic-md><use href=#i-user /></svg> เบอร์หัวหน้าสาขา</label>
-     <input class="inp" id="ab-manager-phone" type="tel" placeholder="08x-xxx-xxxx" style="width:100%" maxlength="50"/>
    </div>
    <div class="mod-f">
      <button class="bo" onclick="closeMod()">ยกเลิก</button>
@@ -4874,12 +4893,10 @@ function openAddBranch(){
 async function doAddBranch(){
  const brand=document.getElementById('ab-brand').value;
  const code=document.getElementById('ab-code').value.trim();
- const shortCode=document.getElementById('ab-short-code').value.trim();
  const name_th=document.getElementById('ab-name-th').value.trim();
  const name_en=document.getElementById('ab-name-en').value.trim();
  const ip=document.getElementById('ab-ip').value.trim();
- const storePhone=document.getElementById('ab-store-phone').value.trim();
- const managerPhone=document.getElementById('ab-manager-phone').value.trim();
+ const phone=document.getElementById('ab-phone').value.trim();
  if(!brand)return toast('<svg class=ic-md><use href=#i-alert /></svg> กรุณาเลือกแบรนด์');
  if(!code)return toast('<svg class=ic-md><use href=#i-alert /></svg> กรุณากรอกรหัสสาขา');
 
@@ -4893,15 +4910,14 @@ async function doAddBranch(){
  if(btn){btn.disabled=true;btn.innerHTML='<span class="spin"></span> กำลังเพิ่ม...';}
  if(cancelBtn)cancelBtn.disabled=true;
  try{
-   const d=await api('/api/branches',{method:'POST',body:JSON.stringify({brand,code,short_code:shortCode,name_th,name_en,ip,store_phone:storePhone,manager_phone:managerPhone})},45000);
+   const d=await api('/api/branches',{method:'POST',body:JSON.stringify({brand,code,name_th,name_en,ip,phone})},45000);
    if(!d.ok)throw new Error(d.error||'Add branch failed');
    // Push to local state — refresh server cache on next reload
    branches.push({
-     id:d.id,brand,code,shortCode,nameTh:name_th,name_en:name_en,
-     ip,storePhone,managerPhone,location_lat:null,location_lng:null,location_name:'',
+     id:d.id,brand,code,nameTh:name_th,name_en:name_en,
+     ip,phone,location_lat:null,location_lng:null,location_name:'',
      status:d.status||'active'
    });
-   buildBranchMap();
    closeMod();
    _renderBranchTable();
    toast('<svg class=ic-md><use href=#i-check /></svg> เพิ่มสาขา '+code+' ('+brand+') สำเร็จ');
@@ -4971,7 +4987,7 @@ function openBranchModal(id){
  <div class="mod-head">
  <div>
  <div class="mod-code">${esc(b.code||'')} · ${esc(b.brand||'')}</div>
- <div class="mod-name">${esc(formatBranch(b.code))}</div>
+ <div class="mod-name">${esc(b.nameTh||b.name_en||'')}</div>
  ${b.name_en&&b.nameTh?`<div class="mod-sub">${esc(b.name_en)}</div>`:''}
  </div>
  <button class="close-btn-sm" onclick="closeMod()"><svg class=ic-md><use href=#i-x /></svg> ปิด</button>
@@ -4981,15 +4997,11 @@ function openBranchModal(id){
  <details class="br-details" style="margin-bottom:14px;border:1px solid var(--border);border-radius:8px;background:var(--bg2)">
  <summary style="padding:10px 14px;cursor:pointer;font-size:12px;font-weight:600;color:var(--fg);user-select:none;list-style:none;display:flex;align-items:center;justify-content:space-between"><span><svg class=ic-md><use href=#i-edit /></svg> แก้ไขข้อมูลพื้นฐาน (ชื่อ / IP / เบอร์)</span><svg class=ic-md style="opacity:.5"><use href=#i-chevron-down /></svg></summary>
  <div style="padding:12px 14px;border-top:1px solid var(--border)">
- <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:10px">
- <div class="fg" style="margin-bottom:0"><label style="font-size:10px">ชื่อสาขา (ไทย)</label><input class="inp" id="br-name-th-edit" value="${esc(b.nameTh||b.name_th||'')}" maxlength="200" style="width:100%"/></div>
- <div class="fg" style="margin-bottom:0"><label style="font-size:10px">ชื่อย่อ</label><input class="inp" id="br-short-code-edit" value="${esc(b.shortCode||b.short_code||'')}" placeholder="เช่น EM" maxlength="30" style="width:100%"/></div>
- </div>
+ <div class="fg" style="margin-bottom:10px"><label style="font-size:10px">ชื่อสาขา (ไทย)</label><input class="inp" id="br-name-th-edit" value="${esc(b.nameTh||b.name_th||'')}" maxlength="200" style="width:100%"/></div>
  <div class="fg" style="margin-bottom:10px"><label style="font-size:10px">ชื่อสาขา (อังกฤษ)</label><input class="inp" id="br-name-en-edit" value="${esc(b.nameEn||b.name_en||'')}" maxlength="200" style="width:100%"/></div>
- <div class="fg" style="margin-bottom:10px"><label style="font-size:10px">IP สาขา</label><input class="inp" id="br-ip-edit" value="${esc(b.ip||'')}" maxlength="50" style="width:100%"/></div>
  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
- <div class="fg" style="margin-bottom:0"><label style="font-size:10px"><svg class=ic-md><use href=#i-phone /></svg> เบอร์ร้าน</label><input class="inp" id="br-store-phone-edit" type="tel" value="${esc(b.storePhone||b.store_phone||'')}" maxlength="50" style="width:100%"/></div>
- <div class="fg" style="margin-bottom:0"><label style="font-size:10px"><svg class=ic-md><use href=#i-user /></svg> เบอร์หัวหน้า</label><input class="inp" id="br-manager-phone-edit" type="tel" value="${esc(b.managerPhone||b.manager_phone||'')}" maxlength="50" style="width:100%"/></div>
+ <div class="fg" style="margin-bottom:0"><label style="font-size:10px">IP สาขา</label><input class="inp" id="br-ip-edit" value="${esc(b.ip||'')}" maxlength="50" style="width:100%"/></div>
+ <div class="fg" style="margin-bottom:0"><label style="font-size:10px">เบอร์โทร</label><input class="inp" id="br-phone-edit" value="${esc(b.phone||'')}" maxlength="50" style="width:100%"/></div>
  </div>
  </div>
  </details>
@@ -5140,18 +5152,14 @@ async function _saveCleared(id){
    // Include basic-info edits if user changed them
    const ne_th=document.getElementById('br-name-th-edit')?.value?.trim();
    const ne_en=document.getElementById('br-name-en-edit')?.value?.trim();
-   const ne_short=document.getElementById('br-short-code-edit')?.value?.trim();
    const ne_ip=document.getElementById('br-ip-edit')?.value?.trim();
-   const ne_store=document.getElementById('br-store-phone-edit')?.value?.trim();
-   const ne_mgr=document.getElementById('br-manager-phone-edit')?.value?.trim();
+   const ne_ph=document.getElementById('br-phone-edit')?.value?.trim();
    const cur=branches.find(x=>String(x.id)===String(id));
    if(cur){
      if(ne_th!==undefined && ne_th!==(cur.nameTh||cur.name_th||''))payload.name_th=ne_th;
      if(ne_en!==undefined && ne_en!==(cur.nameEn||cur.name_en||''))payload.name_en=ne_en;
-     if(ne_short!==undefined && ne_short!==(cur.shortCode||cur.short_code||''))payload.short_code=ne_short;
      if(ne_ip!==undefined && ne_ip!==(cur.ip||''))payload.ip=ne_ip;
-     if(ne_store!==undefined && ne_store!==(cur.storePhone||cur.store_phone||''))payload.store_phone=ne_store;
-     if(ne_mgr!==undefined && ne_mgr!==(cur.managerPhone||cur.manager_phone||''))payload.manager_phone=ne_mgr;
+     if(ne_ph!==undefined && ne_ph!==(cur.phone||''))payload.phone=ne_ph;
    }
    const d=await api('/api/branches/'+id,{method:'PATCH',body:JSON.stringify(payload)},45000);
    if(!d.ok)throw new Error(d.error||'ล้างพิกัดไม่สำเร็จ');
@@ -5161,13 +5169,10 @@ async function _saveCleared(id){
      const upd={...b,location_lat:null,location_lng:null,location_name:''};
      if('name_th' in payload){upd.nameTh=payload.name_th;upd.name_th=payload.name_th;}
      if('name_en' in payload){upd.nameEn=payload.name_en;upd.name_en=payload.name_en;}
-     if('short_code' in payload)upd.shortCode=payload.short_code;
      if('ip' in payload)upd.ip=payload.ip;
-     if('store_phone' in payload)upd.storePhone=payload.store_phone;
-     if('manager_phone' in payload)upd.managerPhone=payload.manager_phone;
+     if('phone' in payload)upd.phone=payload.phone;
      return upd;
    });
-   buildBranchMap();
    toast('<svg class=ic-md><use href=#i-check /></svg> ล้างพิกัดสำเร็จ');
    if(typeof addNotif==='function')addNotif(`ล้างพิกัดสาขา ${id} แล้ว`,'info');
    setTimeout(()=>{closeMod();renderBranches();},500);
@@ -5214,18 +5219,14 @@ async function saveBranchLocation(id){
  // Include basic-info edits if user expanded the section and changed values
  const ne_th=document.getElementById('br-name-th-edit')?.value?.trim();
  const ne_en=document.getElementById('br-name-en-edit')?.value?.trim();
- const ne_short=document.getElementById('br-short-code-edit')?.value?.trim();
  const ne_ip=document.getElementById('br-ip-edit')?.value?.trim();
- const ne_store=document.getElementById('br-store-phone-edit')?.value?.trim();
- const ne_mgr=document.getElementById('br-manager-phone-edit')?.value?.trim();
+ const ne_ph=document.getElementById('br-phone-edit')?.value?.trim();
  const cur=branches.find(x=>String(x.id)===String(id));
  if(cur){
    if(ne_th!==undefined && ne_th!==(cur.nameTh||cur.name_th||''))payload.name_th=ne_th;
    if(ne_en!==undefined && ne_en!==(cur.nameEn||cur.name_en||''))payload.name_en=ne_en;
-   if(ne_short!==undefined && ne_short!==(cur.shortCode||cur.short_code||''))payload.short_code=ne_short;
    if(ne_ip!==undefined && ne_ip!==(cur.ip||''))payload.ip=ne_ip;
-   if(ne_store!==undefined && ne_store!==(cur.storePhone||cur.store_phone||''))payload.store_phone=ne_store;
-   if(ne_mgr!==undefined && ne_mgr!==(cur.managerPhone||cur.manager_phone||''))payload.manager_phone=ne_mgr;
+   if(ne_ph!==undefined && ne_ph!==(cur.phone||''))payload.phone=ne_ph;
  }
  const doSave=(timeoutMs)=>api('/api/branches/'+id,{method:'PATCH',body:JSON.stringify(payload)},timeoutMs);
 
@@ -5252,13 +5253,10 @@ async function saveBranchLocation(id){
    const upd={...b,location_lat:lat,location_lng:lng,location_name:name};
    if('name_th' in payload){upd.nameTh=payload.name_th;upd.name_th=payload.name_th;}
    if('name_en' in payload){upd.nameEn=payload.name_en;upd.name_en=payload.name_en;}
-   if('short_code' in payload)upd.shortCode=payload.short_code;
    if('ip' in payload)upd.ip=payload.ip;
-   if('store_phone' in payload)upd.storePhone=payload.store_phone;
-   if('manager_phone' in payload)upd.managerPhone=payload.manager_phone;
+   if('phone' in payload)upd.phone=payload.phone;
    return upd;
  });
- buildBranchMap();
  clearInterval(progressTimer);
  setBtn('<svg class=ic-md><use href=#i-check /></svg> บันทึกสำเร็จ',true);
  toast('<svg class=ic-md><use href=#i-check /></svg> บันทึก location สำเร็จ');
@@ -5891,7 +5889,7 @@ function expDashboard(type){
  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['แบรนด์','จำนวน'],...brows]),'แบรนด์');
  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([
  ['Ticket ID','แบรนด์','ประเภท','สาขา','ผู้แจ้ง','สถานะ','วันที่'],
- ...tickets.slice(0,500).map(t=>[t.id||'',t.brand||'',t.type||'',cleanBranch(t.branchCode),t.reporter||'',statusLabel(t.status),t.sentDate||''])
+ ...tickets.slice(0,500).map(t=>[t.id||'',t.brand||'',t.type||'',branchLabel(t.branchCode,t.brand),t.reporter||'',statusLabel(t.status),t.sentDate||''])
  ]),'Tickets');
  XLSX.writeFile(wb,'dashboard_'+_fmtDate()+'.xlsx');
  _toastExport('Excel','dashboard_'+_fmtDate()+'.xlsx');
@@ -5900,7 +5898,7 @@ function expDashboard(type){
 
 function expTickets(type){
  const data=tickets.map(t=>[
- t.id||'',t.brand||'',statusLabel(t.status),cleanBranch(t.branchCode),
+ t.id||'',t.brand||'',statusLabel(t.status),branchLabel(t.branchCode,t.brand),
  t.reporter||'',t.phone||'',t.type||'',t.engineerName||'',
  t.sentDate||'',t.workDetail||'',t.partsUsed||'',t.adminNote||''
  ]);
