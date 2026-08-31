@@ -279,6 +279,7 @@ a{color:inherit;text-decoration:none}
 .hs-rev{background:rgba(37,99,235,.15);color:#1d4ed8}.hs-done{background:rgba(22,163,74,.15);color:#15803d}
 .hs-cancel{background:rgba(220,38,38,.15);color:#b91c1c}
 .hs-parts{background:rgba(168,85,247,.15);color:#7e22ce}.hs-vendor{background:rgba(236,72,153,.15);color:#be185d}
+.hs-other{background:rgba(245,158,11,.15);color:#b45309}
 [data-t="dark"] .hs-wait{background:rgba(251,191,36,.12);color:#fbbf24}
 [data-t="dark"] .hs-work{background:rgba(129,140,248,.12);color:#818cf8}
 [data-t="dark"] .hs-rev{background:rgba(96,165,250,.12);color:#60a5fa}
@@ -286,6 +287,7 @@ a{color:inherit;text-decoration:none}
 [data-t="dark"] .hs-cancel{background:rgba(248,113,113,.12);color:#f87171}
 [data-t="dark"] .hs-parts{background:rgba(192,132,252,.14);color:#c084fc}
 [data-t="dark"] .hs-vendor{background:rgba(244,114,182,.14);color:#f472b6}
+[data-t="dark"] .hs-other{background:rgba(251,191,36,.14);color:#fbbf24}
 /* Brand badge */
 .br-badge-sm{padding:2px 8px;border-radius:4px;font-family:var(--mono);font-size:10px;font-weight:700;background:var(--bg3);color:var(--fg3);white-space:nowrap;transition:all .4s}
 /* Responsive */
@@ -471,6 +473,7 @@ a{color:inherit;text-decoration:none}
           <button class="tab-btn on" data-tab="active" onclick="switchEngTab('active')">งานที่รับ <span class="tab-count" id="tc-active"></span></button>
           <button class="tab-btn" data-tab="parts" onclick="switchEngTab('parts')">📦 รออะไหล่ <span class="tab-count" id="tc-parts"></span></button>
           <button class="tab-btn" data-tab="vendor" onclick="switchEngTab('vendor')">🔧 รอซัพ <span class="tab-count" id="tc-vendor"></span></button>
+          <button class="tab-btn" data-tab="other" onclick="switchEngTab('other')">⏸️ อื่นๆ <span class="tab-count" id="tc-other"></span></button>
           <button class="tab-btn" data-tab="review" onclick="switchEngTab('review')">งานตรวจ <span class="tab-count" id="tc-review"></span></button>
           <button class="tab-btn" data-tab="done" onclick="switchEngTab('done')">งานเสร็จ</button>
           <button class="tab-btn" data-tab="history" onclick="switchEngTab('history')">ประวัติ</button>
@@ -480,6 +483,7 @@ a{color:inherit;text-decoration:none}
         <div id="tab-active" class="tab-panel"></div>
         <div id="tab-parts" class="tab-panel"></div>
         <div id="tab-vendor" class="tab-panel"></div>
+        <div id="tab-other" class="tab-panel"></div>
         <div id="tab-review" class="tab-panel"></div>
         <div id="tab-done" class="tab-panel"></div>
         <div id="tab-history" class="tab-panel"></div>
@@ -511,30 +515,59 @@ a{color:inherit;text-decoration:none}
 <script>
 let AUTH=null,tickets=[],tab='active',sse=null,gpsWatch=null,_gpsActive=true; // GPS_DISABLED
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-function statusLabel(s){return(s||'--').replace(/[⏱️⚙️✅❌📦🔧]/g,'').trim();}
+function statusLabel(s){return(s||'--').replace(/[⏱️⚙️✅❌📦🔧⏸️]/g,'').trim();}
 function cleanBranch(code){return(code||'—').replace(/\s*มี\s*\d+\s*เครื่อง.*/i,'').trim()||'—';}
 
 // ═══════════════════════════════════════════════════════════
-// BRANCH MAP — ตัวเชื่อมข้อมูลสาขา (ให้ตรงกับ admin.html)
+// BRANCH MAP — ตัวเชื่อมข้อมูลสาขา (ให้ตรงกับ admin.html / report.html)
+// รหัสสาขาซ้ำข้ามแบรนด์ได้ (0001 มีทั้ง Au Bon Pain และ Greyhound Cafe')
+// จึง index ด้วย brand+code ก่อน แล้วค่อย fallback เป็น code อย่างเดียว
 // ═══════════════════════════════════════════════════════════
-let branchMap = {};
+let branchMap = {};                       // legacy: code → branch (คงไว้ให้ code เดิมใช้ได้)
+let BRANCH_IDX = { byKey:{}, byCode:{} }; // ใหม่: brand|code → branch
+function _brNormBrand(s){
+  if(s==null)return '';
+  return String(s).trim().toLowerCase()
+    .replace(/[\u2018\u2019\u201A\u201B'`´]+$/u,'')    // ตัด apostrophe ท้าย (Dunkin' → dunkin)
+    .replace(/[\u2018\u2019\u201A\u201B'`´]+/gu,"'")   // unify curly → straight
+    .replace(/\s+/g,' ').trim();
+}
+function _brCleanCode(code){
+  return String(code==null?'':code).replace(/\s*มี\s*\d+\s*เครื่อง.*/i,'').trim();
+}
 function buildBranchMap(){
   branchMap = {};
+  BRANCH_IDX = { byKey:{}, byCode:{} };
   (window._allBranches||[]).forEach(b=>{
-    const code = String(b.code||'').trim();
-    if(code) branchMap[code] = b;
+    const code = _brCleanCode(b.code);
+    if(!code) return;
+    const name = String(b.nameTh||b.name_th||b.nameEn||b.name_en||b.shortCode||b.short_code||'').trim();
+    const rec  = Object.assign({}, b, { code, _name:name });
+    branchMap[code] = branchMap[code] || rec;               // legacy map
+    BRANCH_IDX.byKey[_brNormBrand(b.brand)+'|'+code] = rec; // brand-aware
+    if(!BRANCH_IDX.byCode[code]) BRANCH_IDX.byCode[code] = rec;
   });
 }
-function formatBranch(code){
-  const c = String(code||'').trim();
-  if(!c) return '—';
-  const b = branchMap[c];
-  if(!b) return cleanBranch(code);
-  const label = (b.shortCode||b.short_code||b.nameEn||b.name_en||b.nameTh||b.name_th||'').trim();
-  return label ? `${c} - ${label}` : c;
+// หาสาขาจากรหัส (+แบรนด์ถ้ามี)
+function branchInfo(code, brand){
+  const c = _brCleanCode(code);
+  if(!c) return null;
+  return BRANCH_IDX.byKey[_brNormBrand(brand)+'|'+c] || BRANCH_IDX.byCode[c] || null;
 }
-function branchPhonesHtml(code){
-  const b = branchMap[String(code||'').trim()];
+function branchName(code, brand){
+  const b = branchInfo(code, brand);
+  return b ? (b._name||'') : '';
+}
+// แสดงผลมาตรฐาน: "0001 - ABP สินธรทาวเวอร์" (ถ้าไม่เจอชื่อ → คืนรหัสเดิม)
+function formatBranch(code, brand){
+  const c = _brCleanCode(code);
+  if(!c) return '—';
+  const n = branchName(c, brand);
+  return n ? `${c} - ${n}` : c;
+}
+const branchLabel = formatBranch;  // alias — ให้ชื่อตรงกับไฟล์อื่น
+function branchPhonesHtml(code, brand){
+  const b = branchInfo(code, brand);
   if(!b) return '';
   const store = (b.storePhone||b.store_phone||'').trim();
   const mgr   = (b.managerPhone||b.manager_phone||'').trim();
@@ -587,7 +620,7 @@ const TAB_DEFS=[
 const TAB_LABELS={active:'งานของฉัน',review:'ตรวจงาน',done:'เสร็จสิ้น',emergency:'ฉุกเฉิน'};
 
 function updateSidebarNav(){
-  const active=tickets.filter(t=>/อยู่ระหว่างดำเนินการ|in_progress|assigned|accepted|ระหว่าง|pending|รอดำเนินการ|รออะไหล่|รอซัพ|waiting_parts|waiting_vendor/.test(t.status||''));
+  const active=tickets.filter(t=>/อยู่ระหว่างดำเนินการ|in_progress|assigned|accepted|ระหว่าง|pending|รอดำเนินการ|รออะไหล่|รอซัพ|ติดขัดอื่นๆ|waiting_parts|waiting_vendor|stuck_other/.test(t.status||''));
   const review=tickets.filter(t=>/ตรวจงาน|review/.test(t.status||''));
   const done=tickets.filter(t=>/เสร็จสิ้น|completed/.test(t.status||''));
   const counts={active:active.length,review:review.length,done:done.length,history:0,settings:0,emergency:0};
@@ -905,7 +938,7 @@ function openStuckStatus(rid){
     <div style="font-size:12px;color:var(--fg3);margin-bottom:14px;line-height:1.6">เลือกสาเหตุที่ทำให้งานนี้ต้องหยุดชั่วคราว ระบบจะแจ้ง Admin ทันที และคุณสามารถกด "ดำเนินการต่อ" ได้เมื่อพร้อม</div>
 
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
-      <label style="display:flex;align-items:center;gap:10px;padding:12px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s" onclick="this.querySelectorAll('input,div').forEach(()=>{});document.querySelectorAll('.stuck-opt').forEach(o=>o.style.borderColor='var(--border)');this.style.borderColor='#a855f7'">
+      <label class="stuck-opt" style="display:flex;align-items:center;gap:10px;padding:12px;border:1.5px solid #a855f7;border-radius:10px;cursor:pointer;transition:all .15s">
         <input type="radio" name="stuck-reason" value="รออะไหล่" checked style="accent-color:#a855f7;width:16px;height:16px"/>
         <div>
           <div style="font-weight:700;font-size:13px;color:var(--fg)">📦 รออะไหล่</div>
@@ -919,27 +952,58 @@ function openStuckStatus(rid){
           <div style="font-size:11px;color:var(--fg4)">ต้องส่งช่างภายนอก/ผู้ผลิตดำเนินการซ่อม</div>
         </div>
       </label>
+      <label class="stuck-opt" style="display:flex;align-items:center;gap:10px;padding:12px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s">
+        <input type="radio" name="stuck-reason" value="ติดขัดอื่นๆ" style="accent-color:#f59e0b;width:16px;height:16px"/>
+        <div>
+          <div style="font-weight:700;font-size:13px;color:var(--fg)">⏸️ อื่นๆ (ระบุเอง)</div>
+          <div style="font-size:11px;color:var(--fg4)">เหตุผลอื่นที่ไม่ตรงกับ 2 ข้อบน — พิมพ์อธิบายเอง</div>
+        </div>
+      </label>
     </div>
 
     <div class="fg">
-      <label>รายละเอียดเพิ่มเติม (ไม่บังคับ)</label>
+      <label id="stuck-note-label">รายละเอียดเพิ่มเติม (ไม่บังคับ)</label>
       <textarea id="stuck-note" placeholder="เช่น สั่งอะไหล่แล้ว รอของถึงวันศุกร์..." style="min-height:60px"></textarea>
+      <div id="stuck-note-hint" style="font-size:11px;color:var(--fg4);margin-top:4px;display:none">
+        เลือก "อื่นๆ" แล้ว — กรุณาพิมพ์เหตุผลให้ Admin เข้าใจ (อย่างน้อย 5 ตัวอักษร)
+      </div>
     </div>
 
     <div class="mod-f">
       <button class="bo2" onclick="closeMod()">ยกเลิก</button>
-      <button class="bp" style="background:#a855f7" onclick="doSetStuckStatus('${esc(rid)}')">📦 ยืนยันแจ้งติดขัด</button>
+      <button class="bp" id="stuck-confirm-btn" style="background:#a855f7" onclick="doSetStuckStatus('${esc(rid)}')">📦 ยืนยันแจ้งติดขัด</button>
     </div>`);
 
-  // Highlight เมื่อเลือก radio
+  // Highlight + ปรับ UI ตามตัวเลือกที่เลือก
   setTimeout(()=>{
-    document.querySelectorAll('input[name="stuck-reason"]').forEach(r=>{
-      r.closest('label').classList.add('stuck-opt');
-      r.addEventListener('change',()=>{
-        document.querySelectorAll('.stuck-opt').forEach(o=>o.style.borderColor='var(--border)');
-        if(r.checked)r.closest('label').style.borderColor = r.value==='รออะไหล่' ? '#a855f7' : '#ec4899';
+    const COLORS = {'รออะไหล่':'#a855f7','รอซัพดำเนินการซ่อม':'#ec4899','ติดขัดอื่นๆ':'#f59e0b'};
+    const EMOJI  = {'รออะไหล่':'📦','รอซัพดำเนินการซ่อม':'🔧','ติดขัดอื่นๆ':'⏸️'};
+    const applyOpt = (val)=>{
+      const color = COLORS[val]||'#a855f7';
+      document.querySelectorAll('.stuck-opt').forEach(o=>{
+        const inp=o.querySelector('input[name="stuck-reason"]');
+        o.style.borderColor = (inp&&inp.checked) ? color : 'var(--border)';
       });
+      const btn=document.getElementById('stuck-confirm-btn');
+      if(btn){ btn.style.background=color; btn.textContent=`${EMOJI[val]||'📦'} ยืนยันแจ้งติดขัด`; }
+      // ตัวเลือก "อื่นๆ" → บังคับกรอกเหตุผล
+      const isOther = (val==='ติดขัดอื่นๆ');
+      const lbl=document.getElementById('stuck-note-label');
+      const hint=document.getElementById('stuck-note-hint');
+      const ta=document.getElementById('stuck-note');
+      if(lbl)  lbl.innerHTML = isOther ? 'ระบุเหตุผล <span style="color:#dc2626">*</span>' : 'รายละเอียดเพิ่มเติม (ไม่บังคับ)';
+      if(hint) hint.style.display = isOther ? 'block' : 'none';
+      if(ta){
+        ta.placeholder = isOther
+          ? 'เช่น ขายซาก ซ่อมไม่ได้ ต้องซื้อทดแทนใหม่ / รออนุมัติงบ / รอสาขาปิดปรับปรุง...'
+          : 'เช่น สั่งอะไหล่แล้ว รอของถึงวันศุกร์...';
+        if(isOther) setTimeout(()=>ta.focus(),80);
+      }
+    };
+    document.querySelectorAll('input[name="stuck-reason"]').forEach(r=>{
+      r.addEventListener('change',()=>{ if(r.checked) applyOpt(r.value); });
     });
+    applyOpt('รออะไหล่');
   },50);
 }
 
@@ -947,21 +1011,32 @@ async function doSetStuckStatus(rid){
   const reasonEl=document.querySelector('input[name="stuck-reason"]:checked');
   const reason=reasonEl?reasonEl.value:'รออะไหล่';
   const note=(document.getElementById('stuck-note')?.value||'').trim();
-  const emoji=reason==='รออะไหล่'?'📦':'🔧';
+  const EMOJI={'รออะไหล่':'📦','รอซัพดำเนินการซ่อม':'🔧','ติดขัดอื่นๆ':'⏸️'};
+  const emoji=EMOJI[reason]||'📦';
+  const isOther=(reason==='ติดขัดอื่นๆ');
+
+  // "อื่นๆ" ต้องระบุเหตุผล — ไม่งั้น Admin ไม่รู้ว่าติดอะไร
+  if(isOther && note.length<5){
+    const ta=document.getElementById('stuck-note');
+    if(ta){ ta.style.borderColor='#dc2626'; ta.focus(); }
+    toast('⏸️ กรุณาพิมพ์เหตุผลอย่างน้อย 5 ตัวอักษร');
+    return;
+  }
   const statusValue=`${reason} ${emoji}`;
   const t=tickets.find(x=>x._recordId===rid);
 
-  const btn=document.querySelector('.mod-f .bp');
+  const btn=document.getElementById('stuck-confirm-btn')||document.querySelector('.mod-f .bp');
   const orig=btn?.innerHTML||'ยืนยัน';
   if(btn){btn.disabled=true;btn.innerHTML='<span class="spin"></span> กำลังบันทึก...';}
 
   try{
     const body={status:statusValue,brand:t?.brand||''};
-    if(note)body.stuck_note=note;
+    if(note){ body.stuck_note=note; }
+    body.stuck_reason=reason;
     const d=await api(`/api/tickets/${rid}/status`,{method:'PATCH',body:JSON.stringify(body)});
     if(!d.ok)throw new Error(d.error||'Failed');
 
-    tickets=tickets.map(x=>x._recordId===rid?{...x,status:statusValue}:x);
+    tickets=tickets.map(x=>x._recordId===rid?{...x,status:statusValue,stuckNote:note,stuckReason:reason}:x);
     // เก็บ note ไว้แสดงใน detail (optimistic, ไม่รอ reload)
     if(note){
       try{
@@ -972,7 +1047,9 @@ async function doSetStuckStatus(rid){
       }catch(_){}
     }
     closeMod();render();
-    toast(`${emoji} แจ้งสถานะ "${reason}" แล้ว — Admin ได้รับแจ้งเตือน`);
+    toast(isOther
+      ? `⏸️ แจ้งติดขัด "${note.slice(0,40)}${note.length>40?'…':''}" แล้ว — Admin ได้รับแจ้งเตือน`
+      : `${emoji} แจ้งสถานะ "${reason}" แล้ว — Admin ได้รับแจ้งเตือน`);
   }catch(e){
     if(btn){btn.disabled=false;btn.innerHTML=orig;}
     toast('Error: '+e.message);
@@ -1082,7 +1159,7 @@ function openSubmit(rid){
     <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:12px">
       <div style="font-family:var(--mono);font-size:11px;color:var(--fg4);margin-bottom:2px">${esc(t.id)} · ${esc(t.brand||'')}</div>
       <div style="font-weight:700;font-size:14px;color:var(--fg);margin-bottom:4px">${esc(t.type||'-')}</div>
-      <div style="font-size:11px;color:var(--fg4)">สาขา: ${esc(t.branchCode||'-')} · วันที่รับ: ${esc(t.sentDate||'-')}</div>
+      <div style="font-size:11px;color:var(--fg4)">สาขา: ${esc(formatBranch(t.branchCode,t.brand))} · วันที่รับ: ${esc(t.sentDate||'-')}</div>
     </div>
 
     <!-- Live timer -->
@@ -1265,21 +1342,42 @@ function openDetail(rid){
     <div style="font-family:var(--mono);font-size:11px;color:var(--fg4);margin-bottom:10px">${esc(t.id)} · <span style="color:var(--fg2)">${esc(t.brand||'')}</span></div>
     ${[
       ['ประเภท', t.type],
-      ['สาขา', formatBranch(t.branchCode)],
+      ['สาขา', formatBranch(t.branchCode,t.brand)],
       ['ผู้แจ้ง', t.reporter],
       ['เบอร์',   t.phone],
       ['วันที่',  t.sentDate],
       ['ที่ตั้ง',  t.location],
     ].map(([l,v])=>`<div style="display:flex;gap:4px;margin-bottom:4px;font-size:13px"><span style="color:var(--fg4);min-width:64px;font-size:11px;font-weight:700;flex-shrink:0">${l}</span><span style="color:var(--fg);font-weight:500;word-break:break-word">${esc(v||'-')}</span></div>`).join('')}
-    ${branchPhonesHtml(t.branchCode)?`<div style="background:var(--bg2);border-radius:8px;padding:10px 12px;margin-top:8px">${branchPhonesHtml(t.branchCode)}</div>`:''}
+    ${branchPhonesHtml(t.branchCode,t.brand)?`<div style="background:var(--bg2);border-radius:8px;padding:10px 12px;margin-top:8px">${branchPhonesHtml(t.branchCode,t.brand)}</div>`:''}
     ${t.detail?`<div style="background:var(--bg2);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--fg);margin-top:10px;line-height:1.6;border-left:3px solid var(--border2)">${esc(t.detail)}</div>`:''}
-    ${t.stuckNote?`<div style="background:rgba(168,85,247,.08);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--fg2);margin-top:6px;border-left:3px solid #a855f7">📦 เหตุผลติดขัด: ${esc(t.stuckNote)}</div>`:''}
+    ${stuckBlockHtml(t, rid)}
     ${t.adminNote?`<div style="background:var(--bg2);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--fg3);margin-top:6px;border-left:3px solid var(--fg)">📌 Admin: ${esc(t.adminNote)}</div>`:''}
     ${imgHtml}
     <div class="mod-f" style="margin-top:14px">
       ${hasGPS?`<button class="bp" style="background:#1a73e8;flex:1" onclick="openBranchMap('${esc(rid)}')">🗺️ นำทาง</button>`:''}
       <button class="bo2" onclick="closeMod()" style="flex:1">ปิด</button>
     </div>`);
+}
+
+// กล่องแสดง "เหตุผลติดขัด" — ดึงจาก ticket ก่อน ถ้าไม่มีค่อย fallback localStorage
+function stuckBlockHtml(t, rid){
+  let note = (t.stuckNote||t.stuck_note||'').trim();
+  if(!note){
+    try{
+      const sv=JSON.parse(localStorage.getItem('eng_stuck_note_'+(AUTH?.user?.id||'x'))||'{}');
+      note=(sv[rid]||'').trim();
+    }catch(_){}
+  }
+  const st=String(t.status||'');
+  const isParts  = /รออะไหล่|waiting_parts/.test(st);
+  const isVendor = /รอซัพ|waiting_vendor/.test(st);
+  const isOther  = /ติดขัดอื่นๆ|stuck_other/.test(st);
+  if(!note && !isParts && !isVendor && !isOther) return '';
+  const meta = isOther  ? {c:'#f59e0b', e:'⏸️', l:'ติดขัดอื่นๆ'}
+             : isVendor ? {c:'#ec4899', e:'🔧', l:'รอซัพดำเนินการซ่อม'}
+             :            {c:'#a855f7', e:'📦', l:'รออะไหล่'};
+  return `<div style="background:${meta.c}14;border-radius:8px;padding:8px 12px;font-size:12px;color:var(--fg2);margin-top:6px;border-left:3px solid ${meta.c}">
+    <b style="color:${meta.c}">${meta.e} ${meta.l}</b>${note?` — ${esc(note)}`:''}</div>`;
 }
 
 // เปิด Google Maps นำทาง จาก GPS ปัจจุบัน → สาขา
@@ -1419,7 +1517,7 @@ function switchEngTab(t){
     b.classList.toggle('on', b.getAttribute('onclick')?.includes("'"+t+"'"));
   });
   // Update topbar title
-  const titles={dashboard:'Dashboard',active:'งานของฉัน',parts:'📦 รออะไหล่',vendor:'🔧 รอซัพดำเนินการซ่อม',review:'ตรวจงาน',done:'งานเสร็จ',history:'ประวัติ',settings:'ตั้งค่า',emergency:'ฉุกเฉิน'};
+  const titles={dashboard:'Dashboard',active:'งานของฉัน',parts:'📦 รออะไหล่',vendor:'🔧 รอซัพดำเนินการซ่อม',other:'⏸️ ติดขัดอื่นๆ',review:'ตรวจงาน',done:'งานเสร็จ',history:'ประวัติ',settings:'ตั้งค่า',emergency:'ฉุกเฉิน'};
   const el=document.getElementById('top-title');
   if(el)el.textContent=titles[t]||t;
   // Hide stats bar on dashboard (dashboard has its own stats)
@@ -1431,9 +1529,10 @@ function switchEngTab(t){
 
 function renderEngTab(){
   // ⚠️ active = เฉพาะกำลังทำ/รอดำเนินการ — ไม่รวมรออะไหล่/รอซัพ (แยกแถบแล้ว)
-  const active = tickets.filter(t=>/อยู่ระหว่างดำเนินการ|in_progress|assigned|accepted|ระหว่าง|pending|รอดำเนินการ/.test(t.status||'')&&!/รออะไหล่|รอซัพ|waiting_parts|waiting_vendor/.test(t.status||''));
+  const active = tickets.filter(t=>/อยู่ระหว่างดำเนินการ|in_progress|assigned|accepted|ระหว่าง|pending|รอดำเนินการ/.test(t.status||'')&&!/รออะไหล่|รอซัพ|ติดขัดอื่นๆ|waiting_parts|waiting_vendor|stuck_other/.test(t.status||''));
   const parts  = tickets.filter(t=>/รออะไหล่|waiting_parts/.test(t.status||''));
   const vendor = tickets.filter(t=>/รอซัพ|waiting_vendor/.test(t.status||''));
+  const other  = tickets.filter(t=>/ติดขัดอื่นๆ|stuck_other/.test(t.status||''));
   const review = tickets.filter(t=>/ตรวจงาน|review/.test(t.status||''));
   const done   = tickets.filter(t=>/เสร็จสิ้น|completed|done/.test(t.status||''));
   const total  = tickets.length;
@@ -1444,6 +1543,7 @@ function renderEngTab(){
   setBadge('tc-active',active.length);
   setBadge('tc-parts',parts.length);
   setBadge('tc-vendor',vendor.length);
+  setBadge('tc-other',other.length);
   setBadge('tc-review',review.length);
 
   // Stats bar — ซ่อนทุกแท็บ เพราะ Dashboard มี stats ของตัวเอง
@@ -1463,6 +1563,7 @@ function renderEngTab(){
   else if(engTab==='active')     renderEngJobList('tab-active', active, true);
   else if(engTab==='parts')      renderEngJobList('tab-parts', parts, true);
   else if(engTab==='vendor')     renderEngJobList('tab-vendor', vendor, true);
+  else if(engTab==='other')      renderEngJobList('tab-other', other, true);
   else if(engTab==='review')     renderEngJobList('tab-review', review, false);
   else if(engTab==='done')       renderEngJobList('tab-done', done, false);
   else if(engTab==='history')    renderEngHistory();
@@ -1471,7 +1572,7 @@ function renderEngTab(){
 }
 function renderEngDashboard(){
   const total=tickets.length;
-  const active=tickets.filter(t=>/อยู่ระหว่างดำเนินการ|in_progress|assigned|accepted|ระหว่าง|pending|รอดำเนินการ|รออะไหล่|รอซัพ|waiting_parts|waiting_vendor/.test(t.status||''));
+  const active=tickets.filter(t=>/อยู่ระหว่างดำเนินการ|in_progress|assigned|accepted|ระหว่าง|pending|รอดำเนินการ|รออะไหล่|รอซัพ|ติดขัดอื่นๆ|waiting_parts|waiting_vendor|stuck_other/.test(t.status||''));
   const review=tickets.filter(t=>/ตรวจงาน|review/.test(t.status||''));
   const done=tickets.filter(t=>/เสร็จสิ้น|completed/.test(t.status||''));
   const mx=Math.max(total,1);
@@ -1551,8 +1652,8 @@ function renderEngJobList(containerId, list, isActive){
   if(!window._jtState[tabKey]) window._jtState[tabKey]={page:1,perPage:10,search:''};
   window._jtState[tabKey].list = list;
 
-  const tabLabels = {active:'งานของฉัน',review:'ตรวจงาน',done:'งานเสร็จ'};
-  const tabIcons  = {active:'🔧',review:'🔍',done:'✅'};
+  const tabLabels = {active:'งานของฉัน',parts:'รออะไหล่',vendor:'รอซัพดำเนินการซ่อม',other:'ติดขัดอื่นๆ',review:'ตรวจงาน',done:'งานเสร็จ'};
+  const tabIcons  = {active:'🔧',parts:'📦',vendor:'🔧',other:'⏸️',review:'🔍',done:'✅'};
 
   el.innerHTML = `<div>
     <div class="hist-hdr">
@@ -1601,7 +1702,7 @@ function _renderJobTable(containerId, isActive){
     return (t.id||'').toLowerCase().includes(q)||
            (t.type||'').toLowerCase().includes(q)||
            cleanBranch(t.branchCode).toLowerCase().includes(q)||
-           formatBranch(t.branchCode).toLowerCase().includes(q)||
+           formatBranch(t.branchCode,t.brand).toLowerCase().includes(q)||
            (t.brand||'').toLowerCase().includes(q);
   });
   const total = filtered.length;
@@ -1626,6 +1727,7 @@ function _renderJobTable(containerId, isActive){
     const isWorking  = /in_progress|ระหว่าง/.test(t.status||'');
     const isWaitingParts  = /รออะไหล่|waiting_parts/.test(t.status||'');
     const isWaitingVendor = /รอซัพ|waiting_vendor/.test(t.status||'');
+    const isStuckOther    = /ติดขัดอื่นๆ|stuck_other/.test(t.status||'');
     const isReview   = /ตรวจ|review/.test(t.status||'');
     const isDone     = /เสร็จ|completed/.test(t.status||'');
     const sa = sv[t._recordId]||null;
@@ -1640,6 +1742,7 @@ function _renderJobTable(containerId, isActive){
     else if(/ตรวจ|review/.test(sl))     pillCls='hs-rev';
     else if(/รออะไหล่|waiting_parts/.test(sl))  pillCls='hs-parts';
     else if(/รอซัพ|waiting_vendor/.test(sl))    pillCls='hs-vendor';
+    else if(/ติดขัดอื่นๆ|stuck_other/.test(sl)) pillCls='hs-other';
     else if(/ระหว่าง|progress/.test(sl)) pillCls='hs-work';
     else if(/ยกเลิก|cancel/.test(sl))   pillCls='hs-cancel';
 
@@ -1656,7 +1759,7 @@ function _renderJobTable(containerId, isActive){
           btns+=`<button class="jt-b submit" onclick="event.stopPropagation();openSubmit('${rid}')">ส่งงาน</button>`;
           btns+=`<button class="jt-b" style="color:#a855f7;border-color:#a855f7" onclick="event.stopPropagation();openStuckStatus('${rid}')">📦 ติดขัด</button>`;
         }
-        else if(isWaitingParts||isWaitingVendor)
+        else if(isWaitingParts||isWaitingVendor||isStuckOther)
           btns+=`<button class="jt-b start" onclick="event.stopPropagation();doResumeWork('${rid}')">▶️ ดำเนินการต่อ</button>`;
       }
     }
@@ -1675,7 +1778,7 @@ function _renderJobTable(containerId, isActive){
         ${timerCell}
       </td>
       <td style="font-weight:600;color:var(--fg);min-width:110px">${esc(t.type||'-')}</td>
-      <td style="font-size:12px;color:var(--fg2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(formatBranch(t.branchCode))}</td>
+      <td style="font-size:12px;color:var(--fg2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(formatBranch(t.branchCode,t.brand))}</td>
       <td><span class="hs-pill ${pillCls}">${statusLabel(t.status)}</span></td>
       <td style="font-size:11px;color:var(--fg4);white-space:nowrap;font-family:var(--mono)">${esc((t.sentDate||'-').slice(0,10))}</td>
       <td onclick="event.stopPropagation()"><div class="jt-act">${btns}</div></td>
@@ -1840,7 +1943,7 @@ function _renderHistTable(fromCache=false){
       const q=_histSearch.toLowerCase();
       const id=(t.id||t.ticket_id||'').toLowerCase();
       const br=cleanBranch(t.branchCode).toLowerCase();
-      const brFmt=formatBranch(t.branchCode).toLowerCase();
+      const brFmt=formatBranch(t.branchCode,t.brand).toLowerCase();
       const tp=(t.type||'').toLowerCase();
       if(!id.includes(q)&&!br.includes(q)&&!brFmt.includes(q)&&!tp.includes(q))return false;
     }
@@ -1865,7 +1968,7 @@ function _renderHistTable(fromCache=false){
       <td style="color:var(--fg4);font-family:var(--display);font-size:11px;font-weight:600">${start+i+1}</td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--fg4);white-space:nowrap">${esc(t.id||t.ticket_id||'--')}</td>
       <td style="font-weight:600;color:var(--fg)">${esc(t.type||'-')}</td>
-      <td style="font-size:12px;color:var(--fg2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(formatBranch(t.branchCode))}</td>
+      <td style="font-size:12px;color:var(--fg2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(formatBranch(t.branchCode,t.brand))}</td>
       <td><span class="br-badge-sm">${esc(t.brand||'-')}</span></td>
       <td>${_histStatusPill(t.status)}</td>
       <td style="font-size:11px;color:var(--fg4);white-space:nowrap;font-family:var(--mono)">${esc((t.sentDate||'-').slice(0,10))}</td>
@@ -1937,7 +2040,7 @@ window.render = function(){
   // ซ่อน #view เก่าเสมอ
   const v=document.getElementById('view');if(v){v.style.display='none';v.innerHTML='';}
   renderEngTab();
-}
+};   // ← ต้องมี ; ไม่งั้น IIFE บรรทัดถัดไปจะถูกตีความเป็นการ "เรียกฟังก์ชันนี้" (ASI bug)
 
 
 
