@@ -920,12 +920,51 @@ function renderForm(){
 }
 
 // ══ BRANCHES / BOTTOM SHEET ════════════════════════════════
+// ─────────────────────────────────────────────────────────────
+// สาขาพิเศษที่ยังไม่มีใน DB — เพิ่มตรงนี้ได้เลย (ไม่ต้องแตะฐานข้อมูล)
+//   code    = รหัสที่จะถูกบันทึกลง ticket (branchCode)
+//   nameTh  = ชื่อที่แสดงในลิสต์
+//   brands  = null → แสดงทุกแบรนด์ | ['Dunkin\'','Au Bon Pain'] → เฉพาะแบรนด์ที่ระบุ
+// ถ้าวันหลังสาขาถูกเพิ่มเข้า DB จริง ระบบจะไม่ซ้ำ (เช็ค code ก่อน merge)
+// ─────────────────────────────────────────────────────────────
+const EXTRA_BRANCHES=[
+  {code:'K0001', nameTh:'Central Kitchen', nameEn:'Central Kitchen', brands:null},
+  {code:'K0002', nameTh:'Central Bakery',  nameEn:'Central Bakery',  brands:null},
+];
+
+// ยัดสาขาพิเศษเข้า allBranches ตามแบรนด์ที่กำหนด (idempotent — เรียกซ้ำไม่ซ้ำข้อมูล)
+function mergeExtraBranches(){
+  const allBrandNames=BRANDS.map(b=>b.n);
+  EXTRA_BRANCHES.forEach(x=>{
+    const targets=(x.brands&&x.brands.length)?x.brands:allBrandNames;
+    targets.forEach(bn=>{
+      if(!Array.isArray(allBranches[bn])) allBranches[bn]=[];
+      const code=String(x.code||'').trim();
+      if(!code) return;
+      const dup=allBranches[bn].some(b=>String(b.code||'').trim().toLowerCase()===code.toLowerCase());
+      if(dup) return;   // มีใน DB แล้ว → ไม่เพิ่มซ้ำ
+      allBranches[bn].push({
+        id:'extra-'+code, code, nameTh:x.nameTh||code, nameEn:x.nameEn||x.nameTh||code,
+        ip:'', phone:'', _extra:true
+      });
+    });
+  });
+  // เรียงตามรหัสให้หาง่าย
+  Object.keys(allBranches).forEach(bn=>{
+    if(Array.isArray(allBranches[bn]))
+      allBranches[bn].sort((a,b)=>String(a.code||'').localeCompare(String(b.code||''),'en',{numeric:true}));
+  });
+}
+
 async function loadBranchesIfNeeded(){
   if(Object.keys(allBranches).length)return;
   try{
     const d=await fetch('/api/branches').then(r=>r.json());
-    if(d.ok){allBranches=d.branches||{};buildBranchIndex();}
+    if(d.ok){allBranches=d.branches||{};}
   }catch(e){console.warn('[branches]',e.message);}
+  // เพิ่มสาขาพิเศษเสมอ — แม้ API ล่มก็ยังเลือกได้
+  try{ mergeExtraBranches(); }catch(e){ console.warn('[extra branches]',e.message); }
+  try{ buildBranchIndex(); }catch(_){}
 }
 
 function getBrandBranches(q=''){
